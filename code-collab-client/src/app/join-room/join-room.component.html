@@ -1,0 +1,52 @@
+<!-- src/app/join-room/join-room.component.html -->
+<div class="join-room-container">
+  <div class="join-room-card">
+    <h1 class="title">Collaborative Code Editor</h1>
+
+    <form [formGroup]="joinForm" (ngSubmit)="onSubmit()">
+      <div class="form-field">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Your Name</mat-label>
+          <input matInput formControlName="username" placeholder="Enter your display name" autocomplete="off">
+          <mat-error *ngIf="joinForm.get('username')?.hasError('required')">
+            Name is required
+          </mat-error>
+          <mat-error *ngIf="joinForm.get('username')?.hasError('minlength')">
+            Name must be at least 3 characters
+          </mat-error>
+          <mat-error *ngIf="joinForm.get('username')?.hasError('maxlength')">
+            Name must be less than 20 characters
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-field">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Room ID</mat-label>
+          <input matInput formControlName="roomId" placeholder="Enter room ID or generate new one" autocomplete="off">
+          <mat-error *ngIf="joinForm.get('roomId')?.hasError('required')">
+            Room ID is required
+          </mat-error>
+          <mat-error *ngIf="joinForm.get('roomId')?.hasError('minlength')">
+            Room ID must be at least 6 characters
+          </mat-error>
+          <mat-error *ngIf="joinForm.get('roomId')?.hasError('maxlength')">
+            Room ID must be less than 12 characters
+          </mat-error>
+        </mat-form-field>
+        <a class="generate-link" (click)="generateRoomId()">Generate New Room ID</a>
+      </div>
+
+      <div *ngIf="formError" class="error-message">
+        {{ formError }}
+      </div>
+
+      <div class="action-buttons">
+        <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting" class="join-button">
+          <span *ngIf="!isSubmitting">Join Room</span>
+          <mat-spinner *ngIf="isSubmitting" diameter="24"></mat-spinner>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
