@@ -4,7 +4,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { JoinRoomComponent } from './components/join-room/join-room.component';
-import { EditorComponent } from './pages/editor/editor.component';
+import { EditorComponent } from './components/editor/editor.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatIconModule } from '@angular/material/icon';

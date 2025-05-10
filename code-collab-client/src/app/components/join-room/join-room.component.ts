@@ -106,7 +106,6 @@ export class JoinRoomComponent implements OnInit {
 
     // Store user info in session storage for persistence
     const userInfo: User = {
-      id: this.generateUserId(),
       name: username,
       color: this.getRandomColor(),
       status: 'active',
