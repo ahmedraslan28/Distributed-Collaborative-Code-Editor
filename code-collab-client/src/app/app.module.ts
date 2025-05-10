@@ -3,8 +3,8 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { JoinRoomComponent } from './join-room/join-room.component';
-import { EditorComponent } from './editor/editor.component';
+import { JoinRoomComponent } from './components/join-room/join-room.component';
+import { EditorComponent } from './pages/editor/editor.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatIconModule } from '@angular/material/icon';
@@ -15,11 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    JoinRoomComponent,
-    EditorComponent
-  ],
+  declarations: [AppComponent, JoinRoomComponent, EditorComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -29,9 +25,9 @@ import { ReactiveFormsModule } from '@angular/forms';
     MatSelectModule,
     MatOptionModule,
     MatProgressSpinnerModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

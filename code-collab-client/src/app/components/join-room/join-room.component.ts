@@ -2,15 +2,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { RoomService } from '../services/room.service';
-import { User } from '../models/user.model';
+import { RoomService } from '../../services/room.service';
+import { User } from '../../models/user.model';
 import { v4 as uuidv4 } from 'uuid';
-
 
 @Component({
   selector: 'app-join-room',
   templateUrl: './join-room.component.html',
-  styleUrls: ['./join-room.component.scss']
+  styleUrls: ['./join-room.component.scss'],
 })
 export class JoinRoomComponent implements OnInit {
   joinForm: FormGroup;
@@ -23,8 +22,22 @@ export class JoinRoomComponent implements OnInit {
     private roomService: RoomService
   ) {
     this.joinForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
-      roomId: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(36)]]
+      username: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(3),
+          Validators.maxLength(20),
+        ],
+      ],
+      roomId: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(6),
+          Validators.maxLength(36),
+        ],
+      ],
     });
   }
 
@@ -36,7 +49,8 @@ export class JoinRoomComponent implements OnInit {
 
   generateRoomId(): void {
     // Generate a random alphanumeric room ID with 8 characters
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = uuidv4();
 
     this.joinForm.get('roomId')?.setValue(result);
@@ -91,7 +105,7 @@ export class JoinRoomComponent implements OnInit {
     const roomId = this.joinForm.get('roomId')?.value.trim();
 
     // Store user info in session storage for persistence
-    const userInfo : User = {
+    const userInfo: User = {
       id: this.generateUserId(),
       name: username,
       color: this.getRandomColor(),
@@ -109,7 +123,7 @@ export class JoinRoomComponent implements OnInit {
       error: (error) => {
         this.formError = 'Failed to join room. Please try again.';
         this.isSubmitting = false;
-      }
+      },
     });
   }
 
