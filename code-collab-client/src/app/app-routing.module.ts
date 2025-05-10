@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { JoinRoomComponent } from './components/join-room/join-room.component';
-import { EditorComponent } from './pages/editor/editor.component';
+import { EditorComponent } from './components/editor/editor.component';
 
 const routes: Routes = [
   { path: '', component: JoinRoomComponent },
