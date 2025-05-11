@@ -19,8 +19,8 @@ export class CollaborationService {
 
   // Subjects to broadcast events to components
   private codeChangeSubject = new Subject<string>();
-  private cursorChangeSubject = new Subject<{userId: string, position: any}>();
-  private selectionChangeSubject = new Subject<{userId: string, range: any}>();
+  private cursorChangeSubject = new Subject<{username: string, position: any}>();
+  private selectionChangeSubject = new Subject<{username: string, range: any}>();
   private userJoinSubject = new Subject<User>();
   private userLeaveSubject = new Subject<string>();
   private chatMessageSubject = new Subject<Message>();
@@ -96,7 +96,7 @@ export class CollaborationService {
     this.stompClient.subscribe(`${this.SUBSCRIBE_URL}/${roomId}`, (message) => {
       const body = JSON.parse(message.body);
       this.cursorChangeSubject.next({
-        userId: body.userId,
+        username: body.username,
         position: body.position
       });
     });
@@ -105,7 +105,7 @@ export class CollaborationService {
     this.stompClient.subscribe(`${this.SUBSCRIBE_URL}/${roomId}`, (message) => {
       const body = JSON.parse(message.body);
       this.selectionChangeSubject.next({
-        userId: body.userId,
+        username: body.username,
         range: body.range
       });
     });
@@ -129,7 +129,7 @@ export class CollaborationService {
     // Subscribe to user leave events
     this.stompClient.subscribe(`${this.SUBSCRIBE_URL}/${roomId}`, (message) => {
       const data = JSON.parse(message.body);
-      this.userLeaveSubject.next(data.userId);
+      this.userLeaveSubject.next(data.username);
 
       // Create system message for user leave
       const leaveMessage: Message = {
@@ -170,22 +170,22 @@ export class CollaborationService {
   }
 
   // Update cursor position
-  updateCursorPosition(userId: string, position: any): void {
+  updateCursorPosition(username: string, position: any): void {
     if (!this.stompClient || !this.connectionStatusSubject.value) return;
 
     this.stompClient.publish({
       destination: `/app/room/${this.activeRoomId}/cursor`,
-      body: JSON.stringify({ userId, position })
+      body: JSON.stringify({ username, position })
     });
   }
 
   // Send selection range changes
-  updateSelectionRange(userId: string, range: any): void {
+  updateSelectionRange(username: string, range: any): void {
     if (!this.stompClient || !this.connectionStatusSubject.value) return;
 
     this.stompClient.publish({
       destination: `/app/room/${this.activeRoomId}/selection`,
-      body: JSON.stringify({ userId, range })
+      body: JSON.stringify({ username, range })
     });
   }
 
@@ -216,12 +216,12 @@ export class CollaborationService {
     this.codeChangeSubject.next(code);
   }
 
-  simulateCursorChange(userId: string, position: any): void {
-    this.cursorChangeSubject.next({ userId, position });
+  simulateCursorChange(username: string, position: any): void {
+    this.cursorChangeSubject.next({ username, position });
   }
 
-  simulateSelectionChange(userId: string, range: any): void {
-    this.selectionChangeSubject.next({ userId, range });
+  simulateSelectionChange(username: string, range: any): void {
+    this.selectionChangeSubject.next({ username, range });
   }
 
   simulateUserJoin(user: User): void {
@@ -237,8 +237,8 @@ export class CollaborationService {
     this.chatMessageSubject.next(joinMessage);
   }
 
-  simulateUserLeave(userId: string, userName: string): void {
-    this.userLeaveSubject.next(userId);
+  simulateUserLeave(userName: string): void {
+    this.userLeaveSubject.next(userName);
 
     const leaveMessage: Message = {
       userName: 'System',

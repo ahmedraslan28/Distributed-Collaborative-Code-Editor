@@ -113,7 +113,7 @@ export class RoomService {
     }
 
     return of(true).pipe(
-      tap((_) => console.log(`User ${userId} left room ${roomId}`)),
+      tap((_) => console.log(`User ${username} left room ${roomId}`)),
       catchError(this.handleError<boolean>('leaveRoom'))
     );
   }
