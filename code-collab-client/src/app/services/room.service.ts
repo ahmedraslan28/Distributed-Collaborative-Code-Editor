@@ -30,7 +30,7 @@ export class RoomService {
       room = JSON.parse(storedRoom) as Room;
 
       // Check if user already exists in the room
-      const existingUserIndex = room.users.findIndex((u) => u.id === user.id);
+      const existingUserIndex = room.users.findIndex((u) => u.name === user.name);
       if (existingUserIndex >= 0) {
         // Update existing user
         room.users[existingUserIndex] = { ...user, status: 'active' };
@@ -92,7 +92,7 @@ export class RoomService {
     );
   }
 
-  leaveRoom(roomId: string, userId: string): Observable<boolean> {
+  leaveRoom(roomId: string, username: string): Observable<boolean> {
     // In a real implementation, this would be an HTTP request
     // For now, we'll mock the backend response
 
@@ -101,7 +101,7 @@ export class RoomService {
       const room: Room = JSON.parse(storedRoom);
 
       // Remove user from room
-      room.users = room.users.filter((u) => u.id !== userId);
+      room.users = room.users.filter((u) => u.name !== username);
 
       // If room is empty, remove it from localStorage
       if (room.users.length === 0) {
