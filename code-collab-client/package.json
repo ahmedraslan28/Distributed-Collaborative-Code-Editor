@@ -22,6 +22,8 @@
     "@angular/router": "^16.2.0",
     "@stomp/stompjs": "^7.1.1",
     "@types/sockjs-client": "^1.5.4",
+    "monaco-editor": "^0.38.0",
+    "ngx-monaco-editor-v2": "^16.0.0",
     "rxjs": "~7.8.0",
     "sockjs-client": "^1.6.1",
     "tslib": "^2.3.0",

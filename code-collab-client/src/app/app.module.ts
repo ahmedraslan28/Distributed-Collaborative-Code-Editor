@@ -13,6 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ReactiveFormsModule } from '@angular/forms';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 
 @NgModule({
   declarations: [AppComponent, JoinRoomComponent, EditorComponent],
@@ -26,6 +27,7 @@ import { ReactiveFormsModule } from '@angular/forms';
     MatOptionModule,
     MatProgressSpinnerModule,
     ReactiveFormsModule,
+    MonacoEditorModule.forRoot(),
   ],
   providers: [],
   bootstrap: [AppComponent],
