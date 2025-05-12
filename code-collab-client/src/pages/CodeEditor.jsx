@@ -1,0 +1,505 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import MonacoEditor from "@monaco-editor/react";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { IoSendSharp } from "react-icons/io5";
+import { useAtom } from "jotai";
+import { userAtom } from "../atoms/userAtom";
+import { socketAtom } from "../atoms/socketAtom";
+import { connectedUsersAtom } from "../atoms/connectedUsersAtom";
+
+export default function CodeEditor() {
+  const [code, setCode] = useState(
+    '// Welcome to the Collaborative Code Editor\n// Start coding here...\n\nfunction helloWorld() {\n  console.log("Hello, world!");\n}\n\nhelloWorld();'
+  );
+  const [language, setLanguage] = useState("javascript");
+  const [output, setOutput] = useState([""]); // Output logs
+  const [input, setInput] = useState(""); // Input for code
+  const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [currentButtonState, setCurrentButtonState] = useState("Run Code");
+  const [socket, setSocket] = useAtom(socketAtom);
+  const [user, setUser] = useAtom(userAtom);
+  const [connectedUsers, setConnectedUsers] = useAtom(connectedUsersAtom);
+  const [chatMessages, setChatMessages] = useState([
+    {
+      user: "Alice",
+      message: "Hey, I think we should optimize this function",
+      time: "11:22:28 PM",
+    },
+    { user: "Bob", message: "Good idea, I'll look at it", time: "11:22:28 PM" },
+    {
+      user: "Charlie",
+      message: "I found a bug in the sorting algorithm",
+      time: "11:22:28 PM",
+    },
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
+
+  const navigate = useNavigate();
+  const parms = useParams();
+  const chatContainerRef = useRef(null);
+
+  const copyRoomId = () => {
+    const roomId = user.roomId || "ledngjjs";
+    navigator.clipboard.writeText(roomId);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  useEffect(() => {
+    console.log("component mounted");
+
+    // Scroll chat to bottom on new messages
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  // WebSocket connection logic
+  // useEffect(() => {
+  //   if (!socket) {
+  //     navigate(`/?roomId=${parms.roomId}`);
+  //   }
+  //   else {
+  //     socket.send(
+  //       JSON.stringify({
+  //         type: "requestToGetUsers",
+  //         userId: user.id
+  //       })
+  //     );
+  //     socket.send(
+  //       JSON.stringify({
+  //         type: "requestForAllData",
+  //       })
+  //     );
+  //     socket.onclose = () => {
+  //       console.log("Connection closed");
+  //       setUser({
+  //         id: "",
+  //         name: "",
+  //         roomId: "",
+  //       })
+  //       setSocket(null);
+  //     }
+  //   }
+  //   return () => {
+  //     socket?.close();
+  //   };
+  // }, []);
+
+  // useEffect(() => {
+  //   if (!socket) {
+  //     navigate("/" + parms.roomId);
+  //   }
+  //   else {
+  //     socket.onmessage = (event) => {
+  //       const data = JSON.parse(event.data);
+  //       // on change of user
+  //       if (data.type === "users") {
+  //         setConnectedUsers(data.users);
+  //       }
+  //       // on change of code
+  //       if (data.type === "code") {
+  //         setCode(data.code);
+  //       }
+
+  //       // on change of input
+  //       if (data.type === "input") {
+  //         setInput(data.input);
+  //       }
+
+  //       // on change of language
+  //       if (data.type === "language") {
+  //         setLanguage(data.language);
+  //       }
+
+  //       // on change of Submit Button Status
+  //       if (data.type === "submitBtnStatus") {
+  //         setCurrentButtonState(data.value);
+  //         setIsLoading(data.isLoading);
+  //       }
+
+  //       // on change of output
+  //       if (data.type === "output") {
+  //         setOutput((prevOutput) => [...prevOutput, data.message]);
+  //         handleButtonStatus("Submit Code", false);
+  //       }
+
+  //       // on receive cursor position
+  //       if (data.type === "cursorPosition") {
+  //         // Update cursor position for the user
+  //         const updatedUsers = connectedUsers.map((user) => {
+  //           if (user.id === data.userId) {
+  //             return { ...user, cursorPosition: data.cursorPosition };
+  //           }
+  //           return user;
+  //         });
+  //         setConnectedUsers(updatedUsers);
+  //       }
+
+  //       // send all data to new user on join
+  //       if (data.type === "requestForAllData") {
+  //         socket?.send(
+  //           JSON.stringify({
+  //             type: "allData",
+  //             code: code,
+  //             input: input,
+  //             language: language,
+  //             currentButtonState: currentButtonState,
+  //             isLoading: isLoading,
+  //             userId: data.userId
+  //           })
+  //         );
+  //       }
+
+  //       // on receive all data
+  //       if (data.type === "allData") {
+  //         setCode(data.code);
+  //         setInput(data.input);
+  //         setLanguage(data.language);
+  //         setCurrentButtonState(data.currentButtonState);
+  //         setIsLoading(data.isLoading);
+  //       }
+
+  //       // // on recive cursor poisition
+  //       // if (data.type === "cursorPosition") {
+  //       //   const updatedUsers = connectedUsers.map((user) => {
+  //       //     if (user.id === data.userId) {
+  //       //       return { ...user, cursorPosition: data.cursorPosition };
+  //       //     }
+  //       //     return user;
+  //       //   });
+  //       //   console.log("updatedUsers", updatedUsers);
+
+  //       //   setConnectedUsers(updatedUsers);
+  //       // }
+  //     };
+  //   }
+  // }, [code, input, language, currentButtonState, isLoading]);
+
+  const handleSubmit = async () => {
+    // Display a simple output for demo purposes
+    setOutput((prev) => [...prev, "Hello, world!"]);
+
+    // handleButtonStatus("Submitting...", true);
+    // const submission = {
+    //   code,
+    //   language,
+    //   roomId: user.roomId,
+    //   input
+    // };
+
+    // socket?.send(user?.id ? user.id : "");
+
+    // const res = await fetch(`http://${IP_ADDRESS}:3000/submit`, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify(submission),
+    // });
+
+    // handleButtonStatus("Compiling...", true);
+
+    // if (!res.ok) {
+    //   setOutput((prevOutput) => [
+    //     ...prevOutput,
+    //     "Error submitting code. Please try again.",
+    //   ]);
+    //   handleButtonStatus("Submit Code", false);
+    // }
+  };
+
+  // handle input change multiple user
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    // socket?.send(
+    //   JSON.stringify({
+    //     type: "input",
+    //     input: e.target.value,
+    //     roomId: user.roomId
+    //   })
+    // );
+  };
+
+  // handle language change multiple user
+  const handleLanguageChange = (value) => {
+    setLanguage(value);
+    // socket?.send(
+    //   JSON.stringify({
+    //     type: "language",
+    //     language: value,
+    //     roomId: user.roomId
+    //   })
+    // );
+  };
+
+  // handle submit button status multiple user
+  const handleButtonStatus = (value, isLoading) => {
+    setCurrentButtonState(value);
+    setIsLoading(isLoading);
+    socket?.send(
+      JSON.stringify({
+        type: "submitBtnStatus",
+        value: value,
+        isLoading: isLoading,
+        roomId: user.roomId,
+      })
+    );
+  };
+
+  const handleEditorDidMount = (editor, monaco) => {
+    console.log("editor", editor);
+    console.log("monaco", monaco);
+
+    if (editor) {
+      // editor.onDidChangeCursorPosition((event: any) => {
+      //   const position = editor.getPosition();
+      //   console.log("Cursor Position:", position);
+      //   socket?.send(
+      //     JSON.stringify({
+      //       type: "cursorPosition",
+      //       cursorPosition: position,
+      //       userId: user.id
+      //     })
+      //   );
+      // });
+
+      // handle code change multiple user
+      editor.onDidChangeModelContent((event) => {
+        console.log("Code Updated:", editor.getValue());
+        setCode(editor.getValue());
+        // socket?.send(
+        //   JSON.stringify({
+        //     type: "code",
+        //     code: editor.getValue(),
+        //     roomId: user.roomId
+        //   })
+        // );
+      });
+
+      editor.onDidChangeCursorSelection((event) => {
+        const selection = editor.getSelection();
+        const selectedText = editor.getModel().getValueInRange(selection);
+        console.log("Selected Code:", selectedText);
+      });
+    }
+  };
+
+  const handleSendChat = (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const newMessage = {
+      user: user.name || "You",
+      message: chatInput,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+    };
+
+    setChatMessages([...chatMessages, newMessage]);
+    setChatInput("");
+
+    // Here you would also send the message via WebSocket
+  };
+
+  const appTitle = "Dark Code Den";
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-900 text-white">
+      {/* Header Bar */}
+      <header className="bg-gray-800 p-3 flex items-center justify-between border-b border-gray-700">
+        <div className="flex items-center space-x-2">
+          <div className="text-xl font-semibold text-purple-400 flex items-center">
+            <span className="text-2xl mr-2">&lt;&gt;</span>
+            {appTitle}
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <div className="text-blue-400 hidden md:flex items-center">
+            <span>#{user.roomId || "ledngjjs"}</span>
+            <button
+              onClick={copyRoomId}
+              className="ml-2 text-sm bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded"
+              title="Copy room ID"
+            >
+              {isCopied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+          <button
+            onClick={handleSubmit}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-1 rounded-md flex items-center"
+            disabled={isLoading}
+          >
+            {isLoading && (
+              <AiOutlineLoading3Quarters className="animate-spin mr-2" />
+            )}
+            {currentButtonState}
+          </button>
+          <select
+            value={language}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="bg-gray-700 text-white px-2 py-1 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+          >
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="cpp">C++</option>
+            <option value="java">Java</option>
+            <option value="rust">Rust</option>
+            <option value="go">Go</option>
+          </select>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex flex-1 h-full overflow-hidden">
+        {/* Left Sidebar - Chat */}
+        <div className="w-72 bg-gray-800 border-r border-gray-700 flex flex-col">
+          <div className="p-3 border-b border-gray-700">
+            <h2 className="text-lg font-semibold text-purple-400">Room Chat</h2>
+          </div>
+
+          {/* Chat Messages */}
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto p-3 space-y-3"
+          >
+            {chatMessages.map((msg, index) => {
+              const isCurrentUser = msg.user === (user.name || "You");
+              return (
+                <div
+                  key={index}
+                  className={`${
+                    isCurrentUser
+                      ? "ml-auto bg-purple-700"
+                      : "mr-auto bg-gray-700"
+                  } rounded-lg p-3 max-w-[80%]`}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium text-purple-300">
+                      {msg.user}
+                    </span>
+                    <span className="text-xs text-gray-400">{msg.time}</span>
+                  </div>
+                  <p className="text-sm">{msg.message}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Chat Input */}
+          <form
+            onSubmit={handleSendChat}
+            className="p-3 border-t border-gray-700 flex"
+          >
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Type a message..."
+              className="bg-gray-700 text-white px-3 py-2 rounded-l-md flex-1 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="bg-purple-500 hover:bg-purple-600 px-3 py-2 rounded-r-md"
+            >
+              <IoSendSharp />
+            </button>
+          </form>
+        </div>
+
+        {/* Center - Code Editor */}
+        <div className="flex-1 flex flex-col">
+          {/* Line numbers and code editor */}
+          <div className="flex-1 overflow-hidden">
+            <MonacoEditor
+              value={code}
+              language={language}
+              theme="vs-dark"
+              className="h-full w-full"
+              options={{
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                lineNumbers: "on",
+                glyphMargin: true,
+                folding: true,
+                automaticLayout: true,
+              }}
+              onMount={handleEditorDidMount}
+            />
+          </div>
+
+          {/* Output Section */}
+          <div className="h-64 border-t border-gray-700 flex flex-col">
+            <div className="bg-gray-800 px-4 py-2 flex items-center justify-between">
+              <h3 className="text-gray-300 flex items-center">
+                <span className="transform rotate-90 inline-block mr-1">▶</span>
+                Output
+              </h3>
+            </div>
+            <div className="flex-1 bg-gray-900 p-3 overflow-y-auto font-mono text-sm">
+              {output.length > 0 ? (
+                output.map((line, index) => (
+                  <div key={index} className="text-gray-300">
+                    {line}
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 italic">
+                  Code output will appear here after execution
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar - Users and Input */}
+        <div className="w-72 bg-gray-800 border-l border-gray-700 flex flex-col">
+          {/* Online Users */}
+          <div className="p-3 border-b border-gray-700">
+            <h2 className="text-lg font-semibold text-purple-400 flex items-center justify-between">
+              <span>Online Users</span>
+              <span className="bg-green-500 text-xs rounded-full px-2 py-0.5">
+                3
+              </span>
+            </h2>
+          </div>
+
+          <div className="p-3 space-y-3 overflow-y-auto m-h-60 min-h-60">
+            {[
+              { name: "Alice", color: "bg-pink-500" },
+              { name: "Bob", color: "bg-green-500" },
+              { name: "Charlie", color: "bg-blue-500" },
+            ].map((user, index) => (
+              <div key={index} className="flex items-center space-x-3">
+                <div className={`${user.color} w-3 h-3 rounded-full`}></div>
+                <span>{user.name}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Input Section */}
+          <div className="p-3 border-t border-gray-700 mt-auto flex-grow">
+            <h2 className="text-lg font-semibold text-purple-400 flex items-center mb-2">
+              <span className="transform -rotate-90 inline-block mr-1">▶</span>
+              Input
+            </h2>
+            <textarea
+              value={input}
+              onChange={(e) => handleInputChange(e)}
+              placeholder="Enter your program input here..."
+              className="bg-gray-700 text-white w-full p-3 rounded-md h-96 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
