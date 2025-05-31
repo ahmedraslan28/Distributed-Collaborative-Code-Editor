@@ -5,6 +5,8 @@ import { socketAtom } from "../atoms/socketAtom";
 import { useNavigate } from "react-router-dom";
 import { Client } from "@stomp/stompjs";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -17,7 +19,6 @@ export default function Register() {
 
   const [searchParams] = useSearchParams();
 
-  
   useEffect(() => {
     const roomIdFromUrl = searchParams.get("roomId");
     if (roomIdFromUrl) {
@@ -55,65 +56,107 @@ export default function Register() {
     if (!validateForm()) {
       return;
     }
+
     const userId = user.id || crypto.randomUUID();
-    setUser({
-      id: userId,
-      name: name,
-      roomId: roomId,
+
+    setLoading(true);
+
+    const client = new Client({
+      brokerURL: `ws://localhost:8080/ws`,
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+
+      onConnect: () => {
+        console.log("Connected to WebSocket");
+
+        client.subscribe(`/queue/errors/${name}`, (res) => {
+          try {
+            const errorMessage = JSON.parse(res.body);
+            console.error("Private error:", errorMessage);
+            errorMessage.message
+              ? toast.error(errorMessage.message)
+              : toast.error("Something went wrong.");
+            setLoading(false);
+          } catch (e) {
+            console.error("Error parsing error message:", e);
+            toast.error("An unexpected error occurred.");
+            setLoading(false);
+          }
+        });
+
+        client.subscribe(`/topic/room/${roomId}`, (res) => {
+          try {
+            const response = JSON.parse(res.body);
+            console.log("Room response:", response);
+            const message = response.message;
+            const messageUsername = message.username;
+            const event = message.event;
+            console.log("event received:", event);
+            if (event === "JOIN_ROOM") {
+              if (messageUsername === name) {
+                console.log("Join confirmed for current user");
+                setUser({
+                  id: userId,
+                  name: name,
+                  roomId: roomId,
+                });
+                setSocket(client);
+                navigate(`/code/${roomId}`);
+                setLoading(false);
+              } else {
+                toast.info(`${messageUsername} joined the room.`);
+              }
+            } 
+            else if (event === "LEAVE_ROOM") {
+              toast.info(`${messageUsername} left the room.`);
+            }
+          } catch (e) {
+            console.error("Error parsing room message:", e);
+          }
+        });
+
+        client.publish({
+          destination: "/app/room/join",
+          body: JSON.stringify({
+            username: name,
+            roomId: roomId,
+            event: "JOIN_ROOM",
+            message: `${name} joined the room`,
+          }),
+        });
+      },
+      onStompError: (frame) => {
+        console.error("STOMP error: " + frame.headers["message"]);
+        console.error("Details: " + frame.body);
+        alert("WebSocket error: " + frame.body);
+        setLoading(false);
+      },
+      onWebSocketError: (error) => {
+        console.error("WebSocket connection error:", error);
+        alert("Network error. Please try again.");
+        setLoading(false);
+      },
+      onWebSocketClose: (event) => {
+        console.log("WebSocket connection closed:", event);
+        setLoading(false);
+      },
+      onDisconnect: () => {
+        console.log("WebSocket connection closed.");
+        setSocket(null);
+        setUser({ id: "", name: "", roomId: "" });
+        setLoading(false);
+      },
     });
-    navigate(`/code/${roomId}`);
-    // setLoading(true);
-    // const client = new Client({
-    //   brokerURL: `ws://localhost:8080/ws`,
-    //   onConnect: () => {
-    //     const userId = user.id || crypto.randomUUID();
-    //     client.subscribe(`/topic/room/${roomId}`, (message) => {
-    //       const roomData = JSON.parse(message.body);
-    //       if (roomData.status === "success") {
-    //         // Update user state
-    //         setUser({
-    //           id: userId,
-    //           name: name,
-    //           roomId: roomId,
-    //         });
-    //         // Store socket client in Jotai state
-    //         setSocket(client);
-    //         // Navigate to code editor
-    //         navigate(`/code/${roomId}`);
-    //       } else {
-    //         // Handle room join failure
-    //         alert(roomData.message || "Failed to join room");
-    //         setLoading(false);
-    //       }
-    //     });
-    //     // Send join room request
-    //     client.publish({
-    //       destination: "/app/room/join",
-    //       body: JSON.stringify({
-    //         userId: userId,
-    //         userName: name,
-    //         roomId: roomId,
-    //       }),
-    //     });
-    //   },
-    //   onStompError: (frame) => {
-    //     console.error("Broker reported error: " + frame.headers["message"]);
-    //     console.error("Additional details: " + frame.body);
-    //     alert("Failed to connect to room");
-    //     setLoading(false);
-    //   },
-    //   onWebSocketError: (error) => {
-    //     console.error("WebSocket connection error:", error);
-    //     alert("Network error. Please try again.");
-    //     setLoading(false);
-    //   },
-    //   onDisconnect: () => {
-    //     console.log("WebSocket connection closed.");
-    //     setLoading(false);
-    //   },
-    // });
-    // // Activate the client to initiate connection
-    // client.activate();
+
+    client.onDisconnect = () => {
+
+      setSocket(null);
+      setUser({ id: "", name: "", roomId: "" });
+      setLoading(false);
+    };
+
+    client.activate();
   };
 
   const handleGenerateRoomId = () => {
@@ -124,8 +167,15 @@ export default function Register() {
 
   const handleJoinRoom = () => {
     if (validateForm()) {
-      
-      initializeSocket();
+      axios
+        .post("http://localhost:8080/api/rooms", {
+          username: name,
+          roomId: roomId,
+        })
+        .then(() => initializeSocket())
+        .catch((error) => {
+          toast.error(error.response.data.message || "Username is already taken.");
+        });
     }
   };
 
@@ -184,16 +234,14 @@ export default function Register() {
           {errors.roomId && (
             <p className="text-red-500 text-xs mt-1">{errors.roomId}</p>
           )}
-
-          {/* New line for Generate Room ID link */}
+          {/* New line for Generate Room ID link */}{" "}
           <div className="mt-2 flex justify-end">
-            <a
-              href="#"
+            <button
               onClick={handleGenerateRoomId}
               className="text-sm text-purple-500 hover:text-purple-600"
             >
               create a new room? generate a Room ID
-            </a>
+            </button>
           </div>
         </div>
 

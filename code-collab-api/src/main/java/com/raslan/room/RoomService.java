@@ -1,5 +1,6 @@
 package com.raslan.room;
 
+import com.raslan.room.Exeption.DuplicateResourceException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,27 +16,16 @@ public class RoomService {
 
     public Room createRoom(String username, String roomId) {
         Room room = new Room();
-        if (roomId != null)
-            room.setId(roomId);
-
+        room.setId(roomId);
         room.addUser(username);
-
         redisTemplate.opsForValue().set(ROOM_PREFIX + room.getId(), room);
         log.info("Room {} created by user {}", room.getId(), username);
         return room;
     }
 
     public Room joinRoom(String username, String roomId) {
-        Room room = getRoom(roomId);
-
-        if (room.getActiveUsers().contains(username)) {
-            throw new RuntimeException("user name is already taken");
-        }
-
-        room.addUser(username);
-        redisTemplate.opsForValue().set(ROOM_PREFIX + roomId, room);
+        Room room = getRoom(roomId) ;
         log.info("User {} joined room {}", username, roomId);
-
         return room;
     }
 
@@ -47,6 +37,18 @@ public class RoomService {
         return redisTemplate.opsForValue().get(ROOM_PREFIX + roomId);
     }
 
+    public Room joinOrCreate(String username, String roomId){
+        if(!isRoomExists(roomId)) {
+            return this.createRoom(username, roomId);
+        }
+        Room room = getRoom(roomId) ;
+        if (room.getActiveUsers().contains(username)) {
+            throw new DuplicateResourceException("user name is already taken");
+        }
+        room.addUser(username);
+        redisTemplate.opsForValue().set(ROOM_PREFIX + roomId, room);
+        return room ;
+    }
     public Room leaveRoom(String roomId, String username) {
         Room room = getRoom(roomId);
         if (!room.getActiveUsers().contains(username)) {

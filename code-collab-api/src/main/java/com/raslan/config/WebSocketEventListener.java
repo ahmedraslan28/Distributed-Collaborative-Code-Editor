@@ -14,6 +14,7 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -50,6 +51,6 @@ public class WebSocketEventListener {
                 .message(username + " has left the room.")
                 .build();
         roomService.leaveRoom(roomId, username);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message));
     }
 }

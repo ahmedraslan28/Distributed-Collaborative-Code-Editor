@@ -1,5 +1,7 @@
 package com.raslan.room.controller;
 
+import com.raslan.room.Exeption.DuplicateResourceException;
+import com.raslan.room.Room;
 import com.raslan.room.RoomService;
 import com.raslan.shared.WebSocketMessage;
 import com.raslan.shared.WebsocketEvents;
@@ -25,9 +27,8 @@ public class RoomWebSocketController {
         String sessionId = headerAccessor.getSessionId();
         String roomId = request.get("roomId");
         String username = request.get("username");
-        String type = request.get("type");
 
-        log.info("type: " + type + " roomId: " + roomId + " username: " + username);
+        log.info(" roomId: " + roomId + " username: " + username);
 
         // Store the username in the session attributes
         headerAccessor.getSessionAttributes().put("username", username);
@@ -36,17 +37,20 @@ public class RoomWebSocketController {
         WebSocketMessage message = new WebSocketMessage();
         message.setUsername(username);
         message.setRoomId(roomId);
+        Room room;
 
-        if (type.equals("CREATE")) {
-            roomService.createRoom(username, roomId);
-            message.setEvent(WebsocketEvents.CREATE_ROOM);
-            message.setMessage("Room with id " + roomId + " created by user " + username);
-        } else {
-            roomService.joinRoom(username, roomId);
+        try {
+            room = roomService.joinRoom(username, roomId);
             message.setEvent(WebsocketEvents.JOIN_ROOM);
             message.setMessage("User " + username + " joined room");
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "room", room));
+        } catch (Exception ex) {
+            log.info("Error joining room: " + ex.getMessage());
+            message.setEvent("ERROR");
+            message.setMessage("Unexpected error: " + ex.getMessage());
+            messagingTemplate.convertAndSend("/queue/errors/"+username, message);
         }
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
+
     }
 
 
@@ -67,7 +71,7 @@ public class RoomWebSocketController {
                 .message(username + " has left the room.")
                 .build();
         roomService.leaveRoom(roomId, username);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message));
     }
 
 }

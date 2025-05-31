@@ -7,6 +7,7 @@ import { useAtom } from "jotai";
 import { userAtom } from "../atoms/userAtom";
 import { socketAtom } from "../atoms/socketAtom";
 import { connectedUsersAtom } from "../atoms/connectedUsersAtom";
+import { toast } from "react-toastify";
 
 export default function CodeEditor() {
   const [code, setCode] = useState(
@@ -322,26 +323,46 @@ export default function CodeEditor() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="text-blue-400 hidden md:flex items-center">
-            <span>#{user.roomId || "ledngjjs"}</span>
+          {" "}
+          <div className="text-blue-400 hidden md:flex items-center space-x-4">
+            <div className="flex items-center">
+              <span>#{user.roomId || "ledngjjs"}</span>
+              <button
+                onClick={copyRoomId}
+                className="ml-2 text-sm bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded"
+                title="Copy room ID"
+              >
+                {isCopied ? "Copied!" : "Copy"}
+              </button>
+            </div>
             <button
-              onClick={copyRoomId}
-              className="ml-2 text-sm bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded"
-              title="Copy room ID"
+              onClick={() => {
+                console.log("WebSocket connection closed.");
+
+                if (socket.connected && user.name) {
+                  try {
+                    socket.publish({
+                      destination: "/app/room/leave",
+                    });
+                  } catch (error) {
+                    console.log("Error sending leave message:", error);
+                  }
+                }
+                socket.deactivate();
+                setUser({
+                  id: "",
+                  name: "",
+                  roomId: "",
+                });
+                setSocket(null);
+                navigate("/");
+              }}
+              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md flex items-center"
+              title="Leave Room"
             >
-              {isCopied ? "Copied!" : "Copy"}
+              Leave Room
             </button>
           </div>
-          <button
-            onClick={handleSubmit}
-            className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-1 rounded-md flex items-center"
-            disabled={isLoading}
-          >
-            {isLoading && (
-              <AiOutlineLoading3Quarters className="animate-spin mr-2" />
-            )}
-            {currentButtonState}
-          </button>
           <select
             value={language}
             onChange={(e) => handleLanguageChange(e.target.value)}
@@ -413,7 +434,6 @@ export default function CodeEditor() {
             </button>
           </form>
         </div>
-
         {/* Center - Code Editor */}
         <div className="flex-1 flex flex-col">
           {/* Line numbers and code editor */}
@@ -438,11 +458,19 @@ export default function CodeEditor() {
 
           {/* Output Section */}
           <div className="h-64 border-t border-gray-700 flex flex-col">
+            {" "}
             <div className="bg-gray-800 px-4 py-2 flex items-center justify-between">
-              <h3 className="text-gray-300 flex items-center">
-                <span className="transform rotate-90 inline-block mr-1">▶</span>
-                Output
-              </h3>
+              <h3 className="text-gray-300 flex items-center">Output</h3>
+              <button
+                onClick={handleSubmit}
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-1 rounded-md flex items-center"
+                disabled={isLoading}
+              >
+                {isLoading && (
+                  <AiOutlineLoading3Quarters className="animate-spin mr-2" />
+                )}
+                {currentButtonState}
+              </button>
             </div>
             <div className="flex-1 bg-gray-900 p-3 overflow-y-auto font-mono text-sm">
               {output.length > 0 ? (
@@ -458,45 +486,50 @@ export default function CodeEditor() {
               )}
             </div>
           </div>
-        </div>
-
+        </div>{" "}
         {/* Right Sidebar - Users and Input */}
-        <div className="w-72 bg-gray-800 border-l border-gray-700 flex flex-col">
-          {/* Online Users */}
-          <div className="p-3 border-b border-gray-700">
-            <h2 className="text-lg font-semibold text-purple-400 flex items-center justify-between">
-              <span>Online Users</span>
-              <span className="bg-green-500 text-xs rounded-full px-2 py-0.5">
-                3
-              </span>
-            </h2>
-          </div>
+        <div className="w-72 bg-gray-800 border-l border-gray-700 flex flex-col h-full overflow-hidden">
+          {/* Online Users Section */}
+          <div className="flex-none bg-gray-800">
+            <div className="p-3 border-b border-gray-700">
+              <h2 className="text-lg font-semibold text-purple-400 flex items-center justify-between">
+                <span>Online Users</span>
+                <span className="bg-green-500 text-xs rounded-full px-2 py-0.5">
+                  3
+                </span>
+              </h2>
+            </div>
 
-          <div className="p-3 space-y-3 overflow-y-auto m-h-60 min-h-60">
-            {[
-              { name: "Alice", color: "bg-pink-500" },
-              { name: "Bob", color: "bg-green-500" },
-              { name: "Charlie", color: "bg-blue-500" },
-            ].map((user, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <div className={`${user.color} w-3 h-3 rounded-full`}></div>
-                <span>{user.name}</span>
-              </div>
-            ))}
+            <div className="p-3 space-y-2 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+              {[
+                { name: "Alice", color: "bg-pink-500" },
+                { name: "Bob", color: "bg-green-500" },
+                { name: "Charlie", color: "bg-blue-500" },
+              ].map((user, index) => (
+                <div
+                  key={index}
+                  className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  <div className={`${user.color} w-3 h-3 rounded-full`}></div>
+                  <span className="text-gray-200">{user.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Input Section */}
-          <div className="p-3 border-t border-gray-700 mt-auto flex-grow">
-            <h2 className="text-lg font-semibold text-purple-400 flex items-center mb-2">
-              <span className="transform -rotate-90 inline-block mr-1">▶</span>
+          <div className="flex-1 flex flex-col min-h-0 p-3 border-t border-gray-700">
+            <h2 className="text-lg font-semibold text-purple-400 flex items-center mb-2 flex-none">
               Input
             </h2>
-            <textarea
-              value={input}
-              onChange={(e) => handleInputChange(e)}
-              placeholder="Enter your program input here..."
-              className="bg-gray-700 text-white w-full p-3 rounded-md h-96 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500"
-            ></textarea>
+            <div className="flex-1 min-h-0">
+              <textarea
+                value={input}
+                onChange={(e) => handleInputChange(e)}
+                placeholder="Enter your program input here..."
+                className="bg-gray-700 text-white w-full h-full p-3 rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-purple-500 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
+              ></textarea>
+            </div>{" "}
           </div>
         </div>
       </div>

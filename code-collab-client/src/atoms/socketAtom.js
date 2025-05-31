@@ -1,7 +1,3 @@
-import {atom} from 'jotai';
+import { atom } from "jotai";
 
-
-export const socketAtom = atom({
-  key: "socketAtom",
-  default: null,
-});
+export const socketAtom = atom(null);
