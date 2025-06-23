@@ -43,14 +43,13 @@ public class WebSocketEventListener {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
         log.info("User Disconnected: " + username + " from room " + roomId + " (Session: " + sessionId + ")");
 
-
         WebSocketMessage message = WebSocketMessage.builder()
                 .roomId(roomId)
                 .username(username)
                 .event(WebsocketEvents.LEAVE_ROOM)
-                .message(username + " has left the room.")
+                .message(username + " disconnected from the room.")
                 .build();
-        roomService.leaveRoom(roomId, username);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message));
+        Room room = roomService.leaveRoom(roomId, username);
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "users", room.getActiveUsers()));
     }
 }

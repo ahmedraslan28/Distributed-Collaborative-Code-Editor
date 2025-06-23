@@ -1,6 +1,5 @@
 package com.raslan.room.controller;
 
-import com.raslan.room.Exeption.DuplicateResourceException;
 import com.raslan.room.Room;
 import com.raslan.room.RoomService;
 import com.raslan.shared.WebSocketMessage;
@@ -43,12 +42,12 @@ public class RoomWebSocketController {
             room = roomService.joinRoom(username, roomId);
             message.setEvent(WebsocketEvents.JOIN_ROOM);
             message.setMessage("User " + username + " joined room");
-            messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "room", room));
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "users", room.getActiveUsers()));
         } catch (Exception ex) {
             log.info("Error joining room: " + ex.getMessage());
             message.setEvent("ERROR");
             message.setMessage("Unexpected error: " + ex.getMessage());
-            messagingTemplate.convertAndSend("/queue/errors/"+username, message);
+            messagingTemplate.convertAndSend("/queue/errors/" + username, message);
         }
 
     }
@@ -70,8 +69,29 @@ public class RoomWebSocketController {
                 .event(WebsocketEvents.LEAVE_ROOM)
                 .message(username + " has left the room.")
                 .build();
-        roomService.leaveRoom(roomId, username);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message));
+        Room room = roomService.leaveRoom(roomId, username);
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "users", room.getActiveUsers()));
     }
 
+
+    @MessageMapping("/room/languageChange")
+    public void handleLanguageChange(@Payload Map<String, String> request,SimpMessageHeaderAccessor headerAccessor) {
+        String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
+        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.LANGUAGE_CHANGE).build();
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "language", request.get("language")));
+    }
+
+    @MessageMapping("/room/inputChange")
+    public void handleInputChange(@Payload Map<String, String> request,SimpMessageHeaderAccessor headerAccessor) {
+        String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
+        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.INPUT_CHANGE).build();
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "input", request.get("input")));
+    }
+
+    @MessageMapping("/room/chatMessage")
+    public void handleMessage(@Payload Map<String, Object> request,SimpMessageHeaderAccessor headerAccessor) {
+        String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
+        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CHAT_MESSAGE).build();
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "chatMessage", request.get("chatMessage")));
+    }
 }
