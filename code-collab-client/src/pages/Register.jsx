@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAtom } from "jotai";
 import { userAtom } from "../atoms/userAtom";
+import { connectedUsersAtom } from "../atoms/connectedUsersAtom";
+
 import { socketAtom } from "../atoms/socketAtom";
+import { roomAtom } from "../atoms/roomAtom";
 import { useNavigate } from "react-router-dom";
 import { Client } from "@stomp/stompjs";
 import { useSearchParams } from "react-router-dom";
@@ -16,6 +19,10 @@ export default function Register() {
     name: "",
     roomId: "",
   });
+  const [user, setUser] = useAtom(userAtom);
+  const [socket, setSocket] = useAtom(socketAtom);
+  const [room, setRoom] = useAtom(roomAtom);
+  const [connectedUsers, setConnectedUsers] = useAtom(connectedUsersAtom);
 
   const [searchParams] = useSearchParams();
 
@@ -26,8 +33,6 @@ export default function Register() {
     }
   }, [searchParams]);
 
-  const [user, setUser] = useAtom(userAtom);
-  const [socket, setSocket] = useAtom(socketAtom);
 
   const navigate = useNavigate();
 
@@ -92,10 +97,10 @@ export default function Register() {
             const message = response.message;
             const messageUsername = message.username;
             const event = message.event;
-            console.log("event received:", event);
+            
             if (event === "JOIN_ROOM") {
+              setConnectedUsers(response.users);
               if (messageUsername === name) {
-                console.log("Join confirmed for current user");
                 setUser({
                   id: userId,
                   name: name,
@@ -109,6 +114,7 @@ export default function Register() {
               }
             } 
             else if (event === "LEAVE_ROOM") {
+              setConnectedUsers(response.users);
               toast.info(`${messageUsername} left the room.`);
             }
           } catch (e) {
@@ -150,7 +156,6 @@ export default function Register() {
     });
 
     client.onDisconnect = () => {
-
       setSocket(null);
       setUser({ id: "", name: "", roomId: "" });
       setLoading(false);

@@ -6,8 +6,8 @@ import { IoSendSharp } from "react-icons/io5";
 import { useAtom } from "jotai";
 import { userAtom } from "../atoms/userAtom";
 import { socketAtom } from "../atoms/socketAtom";
+import { roomAtom } from "../atoms/roomAtom";
 import { connectedUsersAtom } from "../atoms/connectedUsersAtom";
-import { toast } from "react-toastify";
 
 export default function CodeEditor() {
   const [code, setCode] = useState(
@@ -21,19 +21,9 @@ export default function CodeEditor() {
   const [socket, setSocket] = useAtom(socketAtom);
   const [user, setUser] = useAtom(userAtom);
   const [connectedUsers, setConnectedUsers] = useAtom(connectedUsersAtom);
-  const [chatMessages, setChatMessages] = useState([
-    {
-      user: "Alice",
-      message: "Hey, I think we should optimize this function",
-      time: "11:22:28 PM",
-    },
-    { user: "Bob", message: "Good idea, I'll look at it", time: "11:22:28 PM" },
-    {
-      user: "Charlie",
-      message: "I found a bug in the sorting algorithm",
-      time: "11:22:28 PM",
-    },
-  ]);
+  const [room, setRoom] = useAtom(roomAtom);
+
+  const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
   const [isCopied, setIsCopied] = useState(false);
 
@@ -41,143 +31,114 @@ export default function CodeEditor() {
   const parms = useParams();
   const chatContainerRef = useRef(null);
 
+  const userColors = [
+    "bg-red-500",
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-yellow-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-orange-500",
+    "bg-cyan-500",
+  ];
+
   const copyRoomId = () => {
-    const roomId = user.roomId || "ledngjjs";
-    navigator.clipboard.writeText(roomId);
+    navigator.clipboard.writeText(user.roomId);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
 
   useEffect(() => {
-    console.log("component mounted");
-
-    // Scroll chat to bottom on new messages
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+    if (!socket) {
+      navigate(`/?roomId=${parms.roomId}`);
+      return;
     }
-  }, [chatMessages]);
 
-  // WebSocket connection logic
-  // useEffect(() => {
-  //   if (!socket) {
-  //     navigate(`/?roomId=${parms.roomId}`);
-  //   }
-  //   else {
-  //     socket.send(
-  //       JSON.stringify({
-  //         type: "requestToGetUsers",
-  //         userId: user.id
-  //       })
-  //     );
-  //     socket.send(
-  //       JSON.stringify({
-  //         type: "requestForAllData",
-  //       })
-  //     );
-  //     socket.onclose = () => {
-  //       console.log("Connection closed");
-  //       setUser({
-  //         id: "",
-  //         name: "",
-  //         roomId: "",
-  //       })
-  //       setSocket(null);
-  //     }
-  //   }
-  //   return () => {
-  //     socket?.close();
-  //   };
-  // }, []);
+    const subscription = socket.subscribe(`/topic/room/${user.roomId}`, (res) => {
+      const response = JSON.parse(res.body);
+      const event = response.message.event;
+      if (event === "JOIN_ROOM" || event === "LEAVE_ROOM") {
+        setConnectedUsers(response.users);
+      } else if (event === "LANGUAGE_CHANGE") {
+        setLanguage(response.language);
+      } else if (event === "INPUT_CHANGE") {
+        setInput(response.input);
+      } else if (event === "CHAT_MESSAGE") {
+        setChatMessages((prev) => [...prev, response.chatMessage]);
+      }
+    });
 
-  // useEffect(() => {
-  //   if (!socket) {
-  //     navigate("/" + parms.roomId);
-  //   }
-  //   else {
-  //     socket.onmessage = (event) => {
-  //       const data = JSON.parse(event.data);
-  //       // on change of user
-  //       if (data.type === "users") {
-  //         setConnectedUsers(data.users);
-  //       }
-  //       // on change of code
-  //       if (data.type === "code") {
-  //         setCode(data.code);
-  //       }
+    return () => {
+      subscription.unsubscribe();
+    };
 
-  //       // on change of input
-  //       if (data.type === "input") {
-  //         setInput(data.input);
-  //       }
+    // socket.onmessage = (event) => {
+    //   const data = JSON.parse(event.data);
+    //   // on change of code
+    //   // if (data.type === "code") {
+    //   //   setCode(data.code);
+    //   // }
+    //   // // on change of Submit Button Status
+    //   // if (data.type === "submitBtnStatus") {
+    //   //   setCurrentButtonState(data.value);
+    //   //   setIsLoading(data.isLoading);
+    //   // }
+    //   // // on change of output
+    //   // if (data.type === "output") {
+    //   //   setOutput((prevOutput) => [...prevOutput, data.message]);
+    //   //   handleButtonStatus("Submit Code", false);
+    //   // }
 
-  //       // on change of language
-  //       if (data.type === "language") {
-  //         setLanguage(data.language);
-  //       }
+    //   // // on receive cursor position
+    //   // if (data.type === "cursorPosition") {
+    //   //   // Update cursor position for the user
+    //   //   const updatedUsers = connectedUsers.map((user) => {
+    //   //     if (user.id === data.userId) {
+    //   //       return { ...user, cursorPosition: data.cursorPosition };
+    //   //     }
+    //   //     return user;
+    //   //   });
+    //   //   setConnectedUsers(updatedUsers);
+    //   // }
 
-  //       // on change of Submit Button Status
-  //       if (data.type === "submitBtnStatus") {
-  //         setCurrentButtonState(data.value);
-  //         setIsLoading(data.isLoading);
-  //       }
+    //   // // send all data to new user on join
+    //   // if (data.type === "requestForAllData") {
+    //   //   socket?.send(
+    //   //     JSON.stringify({
+    //   //       type: "allData",
+    //   //       code: code,
+    //   //       input: input,
+    //   //       language: language,
+    //   //       currentButtonState: currentButtonState,
+    //   //       isLoading: isLoading,
+    //   //       userId: data.userId,
+    //   //     })
+    //   //   );
+    //   // }
 
-  //       // on change of output
-  //       if (data.type === "output") {
-  //         setOutput((prevOutput) => [...prevOutput, data.message]);
-  //         handleButtonStatus("Submit Code", false);
-  //       }
+    //   // // on receive all data
+    //   // if (data.type === "allData") {
+    //   //   setCode(data.code);
+    //   //   setInput(data.input);
+    //   //   setLanguage(data.language);
+    //   //   setCurrentButtonState(data.currentButtonState);
+    //   //   setIsLoading(data.isLoading);
+    //   // }
 
-  //       // on receive cursor position
-  //       if (data.type === "cursorPosition") {
-  //         // Update cursor position for the user
-  //         const updatedUsers = connectedUsers.map((user) => {
-  //           if (user.id === data.userId) {
-  //             return { ...user, cursorPosition: data.cursorPosition };
-  //           }
-  //           return user;
-  //         });
-  //         setConnectedUsers(updatedUsers);
-  //       }
+    //   // // on recive cursor poisition
+    //   // if (data.type === "cursorPosition") {
+    //   //   const updatedUsers = connectedUsers.map((user) => {
+    //   //     if (user.id === data.userId) {
+    //   //       return { ...user, cursorPosition: data.cursorPosition };
+    //   //     }
+    //   //     return user;
+    //   //   });
+    //   //   console.log("updatedUsers", updatedUsers);
 
-  //       // send all data to new user on join
-  //       if (data.type === "requestForAllData") {
-  //         socket?.send(
-  //           JSON.stringify({
-  //             type: "allData",
-  //             code: code,
-  //             input: input,
-  //             language: language,
-  //             currentButtonState: currentButtonState,
-  //             isLoading: isLoading,
-  //             userId: data.userId
-  //           })
-  //         );
-  //       }
-
-  //       // on receive all data
-  //       if (data.type === "allData") {
-  //         setCode(data.code);
-  //         setInput(data.input);
-  //         setLanguage(data.language);
-  //         setCurrentButtonState(data.currentButtonState);
-  //         setIsLoading(data.isLoading);
-  //       }
-
-  //       // // on recive cursor poisition
-  //       // if (data.type === "cursorPosition") {
-  //       //   const updatedUsers = connectedUsers.map((user) => {
-  //       //     if (user.id === data.userId) {
-  //       //       return { ...user, cursorPosition: data.cursorPosition };
-  //       //     }
-  //       //     return user;
-  //       //   });
-  //       //   console.log("updatedUsers", updatedUsers);
-
-  //       //   setConnectedUsers(updatedUsers);
-  //       // }
-  //     };
-  //   }
+    //   //   setConnectedUsers(updatedUsers);
+    //   // }
+    // };
+  });
   // }, [code, input, language, currentButtonState, isLoading]);
 
   const handleSubmit = async () => {
@@ -213,28 +174,24 @@ export default function CodeEditor() {
     // }
   };
 
-  // handle input change multiple user
   const handleInputChange = (e) => {
     setInput(e.target.value);
-    // socket?.send(
-    //   JSON.stringify({
-    //     type: "input",
-    //     input: e.target.value,
-    //     roomId: user.roomId
-    //   })
-    // );
+    socket.publish({
+      destination: "/app/room/inputChange",
+      body: JSON.stringify({
+        input: e.target.value,
+      }),
+    });
   };
 
-  // handle language change multiple user
   const handleLanguageChange = (value) => {
     setLanguage(value);
-    // socket?.send(
-    //   JSON.stringify({
-    //     type: "language",
-    //     language: value,
-    //     roomId: user.roomId
-    //   })
-    // );
+    socket.publish({
+      destination: "/app/room/languageChange",
+      body: JSON.stringify({
+        language: value,
+      }),
+    });
   };
 
   // handle submit button status multiple user
@@ -306,7 +263,34 @@ export default function CodeEditor() {
     setChatMessages([...chatMessages, newMessage]);
     setChatInput("");
 
-    // Here you would also send the message via WebSocket
+    socket.publish({
+      destination: "/app/room/chatMessage",
+      body: JSON.stringify({
+        chatMessage: newMessage,
+      }),
+    });
+  };
+
+  const handleLeaveRoom = () => {
+    console.log("WebSocket connection closed.");
+
+    if (socket.connected && user.name) {
+      try {
+        socket.publish({
+          destination: "/app/room/leave",
+        });
+      } catch (error) {
+        console.log("Error sending leave message:", error);
+      }
+    }
+    socket.deactivate();
+    setUser({
+      id: "",
+      name: "",
+      roomId: "",
+    });
+    setSocket(null);
+    navigate("/");
   };
 
   const appTitle = "Dark Code Den";
@@ -336,27 +320,7 @@ export default function CodeEditor() {
               </button>
             </div>
             <button
-              onClick={() => {
-                console.log("WebSocket connection closed.");
-
-                if (socket.connected && user.name) {
-                  try {
-                    socket.publish({
-                      destination: "/app/room/leave",
-                    });
-                  } catch (error) {
-                    console.log("Error sending leave message:", error);
-                  }
-                }
-                socket.deactivate();
-                setUser({
-                  id: "",
-                  name: "",
-                  roomId: "",
-                });
-                setSocket(null);
-                navigate("/");
-              }}
+              onClick={handleLeaveRoom}
               className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md flex items-center"
               title="Leave Room"
             >
@@ -372,8 +336,6 @@ export default function CodeEditor() {
             <option value="python">Python</option>
             <option value="cpp">C++</option>
             <option value="java">Java</option>
-            <option value="rust">Rust</option>
-            <option value="go">Go</option>
           </select>
         </div>
       </header>
@@ -404,7 +366,7 @@ export default function CodeEditor() {
                 >
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium text-purple-300">
-                      {msg.user}
+                      {msg.user} {isCurrentUser && "(You)"}
                     </span>
                     <span className="text-xs text-gray-400">{msg.time}</span>
                   </div>
@@ -495,23 +457,23 @@ export default function CodeEditor() {
               <h2 className="text-lg font-semibold text-purple-400 flex items-center justify-between">
                 <span>Online Users</span>
                 <span className="bg-green-500 text-xs rounded-full px-2 py-0.5">
-                  3
+                  {connectedUsers.length}
                 </span>
               </h2>
             </div>
 
             <div className="p-3 space-y-2 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-              {[
-                { name: "Alice", color: "bg-pink-500" },
-                { name: "Bob", color: "bg-green-500" },
-                { name: "Charlie", color: "bg-blue-500" },
-              ].map((user, index) => (
+              {connectedUsers.map((user, index) => (
                 <div
                   key={index}
                   className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700 transition-colors"
                 >
-                  <div className={`${user.color} w-3 h-3 rounded-full`}></div>
-                  <span className="text-gray-200">{user.name}</span>
+                  <div
+                    className={`${
+                      userColors[index % userColors.length]
+                    } w-3 h-3 rounded-full`}
+                  ></div>
+                  <span className="text-gray-200">{user}</span>
                 </div>
               ))}
             </div>
