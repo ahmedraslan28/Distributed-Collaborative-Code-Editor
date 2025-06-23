@@ -48,25 +48,34 @@ export default function CodeEditor() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  
+
   useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
     if (!socket) {
       navigate(`/?roomId=${parms.roomId}`);
       return;
     }
 
-    const subscription = socket.subscribe(`/topic/room/${user.roomId}`, (res) => {
-      const response = JSON.parse(res.body);
-      const event = response.message.event;
-      if (event === "JOIN_ROOM" || event === "LEAVE_ROOM") {
-        setConnectedUsers(response.users);
-      } else if (event === "LANGUAGE_CHANGE") {
-        setLanguage(response.language);
-      } else if (event === "INPUT_CHANGE") {
-        setInput(response.input);
-      } else if (event === "CHAT_MESSAGE") {
-        setChatMessages((prev) => [...prev, response.chatMessage]);
+    const subscription = socket.subscribe(
+      `/topic/room/${user.roomId}`,
+      (res) => {
+        const response = JSON.parse(res.body);
+        const event = response.message.event;
+        if (event === "JOIN_ROOM" || event === "LEAVE_ROOM") {
+          setConnectedUsers(response.users);
+        } else if (event === "LANGUAGE_CHANGE") {
+          setLanguage(response.language);
+        } else if (event === "INPUT_CHANGE") {
+          setInput(response.input);
+        } else if (event === "CHAT_MESSAGE") {
+          setChatMessages((prev) => [...prev, response.chatMessage]);
+        }
       }
-    });
+    );
 
     return () => {
       subscription.unsubscribe();
@@ -353,24 +362,32 @@ export default function CodeEditor() {
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto p-3 space-y-3"
           >
+            {" "}
             {chatMessages.map((msg, index) => {
               const isCurrentUser = msg.user === (user.name || "You");
+              const userIndex = connectedUsers.findIndex((u) => u === msg.user);
+              const userColor = userColors[userIndex % userColors.length];
+              const bgColor = userColor.replace("bg-", "bg-opacity-20 bg-");
+
               return (
                 <div
                   key={index}
                   className={`${
-                    isCurrentUser
-                      ? "ml-auto bg-purple-700"
-                      : "mr-auto bg-gray-700"
-                  } rounded-lg p-3 max-w-[80%]`}
+                    isCurrentUser ? "ml-auto" : "mr-auto"
+                  } ${bgColor} rounded-lg p-3 max-w-[80%]`}
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-purple-300">
-                      {msg.user} {isCurrentUser && "(You)"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-2 h-2 rounded-full ${userColor}`}
+                      ></div>
+                      <span className="font-medium text-white">
+                        {msg.user} {isCurrentUser && "(You)"}
+                      </span>
+                    </div>
                     <span className="text-xs text-gray-400">{msg.time}</span>
                   </div>
-                  <p className="text-sm">{msg.message}</p>
+                  <p className="text-sm text-white">{msg.message}</p>
                 </div>
               );
             })}
