@@ -9,4 +9,5 @@ public class WebsocketEvents {
     public static final String ERROR = "ERROR";
     public static final String INPUT_CHANGE = "INPUT_CHANGE";
     public static final String CHAT_MESSAGE = "CHAT_MESSAGE";
+    public static final String CODE_UPDATE = "CODE_UPDATE";
 }

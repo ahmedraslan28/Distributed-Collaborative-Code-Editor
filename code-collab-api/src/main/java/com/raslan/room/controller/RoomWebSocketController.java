@@ -94,4 +94,12 @@ public class RoomWebSocketController {
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CHAT_MESSAGE).build();
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "chatMessage", request.get("chatMessage")));
     }
+
+
+    @MessageMapping("/room/codeUpdate")
+    public void handleCodeUpdate(@Payload Map<String, Object> request,SimpMessageHeaderAccessor headerAccessor) {
+        String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
+        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CODE_UPDATE).build();
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "code", request.get("code")));
+    }
 }

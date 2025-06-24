@@ -48,8 +48,6 @@ export default function CodeEditor() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  
-
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
@@ -73,6 +71,8 @@ export default function CodeEditor() {
           setInput(response.input);
         } else if (event === "CHAT_MESSAGE") {
           setChatMessages((prev) => [...prev, response.chatMessage]);
+        } else if (event === "CODE_UPDATE") {
+          setCode(response.code);
         }
       }
     );
@@ -83,10 +83,6 @@ export default function CodeEditor() {
 
     // socket.onmessage = (event) => {
     //   const data = JSON.parse(event.data);
-    //   // on change of code
-    //   // if (data.type === "code") {
-    //   //   setCode(data.code);
-    //   // }
     //   // // on change of Submit Button Status
     //   // if (data.type === "submitBtnStatus") {
     //   //   setCurrentButtonState(data.value);
@@ -110,30 +106,6 @@ export default function CodeEditor() {
     //   //   setConnectedUsers(updatedUsers);
     //   // }
 
-    //   // // send all data to new user on join
-    //   // if (data.type === "requestForAllData") {
-    //   //   socket?.send(
-    //   //     JSON.stringify({
-    //   //       type: "allData",
-    //   //       code: code,
-    //   //       input: input,
-    //   //       language: language,
-    //   //       currentButtonState: currentButtonState,
-    //   //       isLoading: isLoading,
-    //   //       userId: data.userId,
-    //   //     })
-    //   //   );
-    //   // }
-
-    //   // // on receive all data
-    //   // if (data.type === "allData") {
-    //   //   setCode(data.code);
-    //   //   setInput(data.input);
-    //   //   setLanguage(data.language);
-    //   //   setCurrentButtonState(data.currentButtonState);
-    //   //   setIsLoading(data.isLoading);
-    //   // }
-
     //   // // on recive cursor poisition
     //   // if (data.type === "cursorPosition") {
     //   //   const updatedUsers = connectedUsers.map((user) => {
@@ -147,8 +119,7 @@ export default function CodeEditor() {
     //   //   setConnectedUsers(updatedUsers);
     //   // }
     // };
-  });
-  // }, [code, input, language, currentButtonState, isLoading]);
+  }, [socket, user.roomId]);
 
   const handleSubmit = async () => {
     // Display a simple output for demo purposes
@@ -222,34 +193,26 @@ export default function CodeEditor() {
     console.log("monaco", monaco);
 
     if (editor) {
-      // editor.onDidChangeCursorPosition((event: any) => {
-      //   const position = editor.getPosition();
-      //   console.log("Cursor Position:", position);
-      //   socket?.send(
-      //     JSON.stringify({
-      //       type: "cursorPosition",
-      //       cursorPosition: position,
-      //       userId: user.id
-      //     })
-      //   );
-      // });
-
-      // handle code change multiple user
       editor.onDidChangeModelContent((event) => {
         console.log("Code Updated:", editor.getValue());
         setCode(editor.getValue());
-        // socket?.send(
-        //   JSON.stringify({
-        //     type: "code",
-        //     code: editor.getValue(),
-        //     roomId: user.roomId
-        //   })
-        // );
+        socket.publish({
+          destination: "/app/room/codeUpdate",
+          body: JSON.stringify({
+            code: editor.getValue(),
+          }),
+        });
       });
 
       editor.onDidChangeCursorSelection((event) => {
         const selection = editor.getSelection();
         const selectedText = editor.getModel().getValueInRange(selection);
+        console.log("Cursor Selection:", selection);
+        console.log(
+          "Cursor Position:",
+          selection.startLineNumber,
+          selection.endColumn
+        );
         console.log("Selected Code:", selectedText);
       });
     }
@@ -302,7 +265,7 @@ export default function CodeEditor() {
     navigate("/");
   };
 
-  const appTitle = "Dark Code Den";
+  const appTitle = "Code Collab Editor";
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white">
