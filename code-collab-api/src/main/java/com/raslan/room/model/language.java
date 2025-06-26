@@ -4,7 +4,7 @@ public enum Languge {
     PYTHON("python"),
     JAVASCRIPT("javascript"),
     JAVA("java"),
-    CPP("c++");
+    CPP("cpp");
     private final String name;
 
     Languge(String name) {
