@@ -229,7 +229,6 @@ export default function CodeEditor() {
       }),
     };
 
-    setChatMessages([...chatMessages, newMessage]);
     setChatInput("");
 
     socket.publish({
