@@ -1,6 +1,6 @@
 package com.raslan.room.controller;
 
-import com.raslan.room.model.Languge;
+import com.raslan.room.model.language;
 import com.raslan.room.model.Room;
 import com.raslan.room.service.RoomService;
 import com.raslan.room.dto.WebSocketMessage;
@@ -43,7 +43,16 @@ public class RoomWebSocketController {
             room = roomService.joinRoom(username, roomId);
             message.setEvent(WebsocketEvents.JOIN_ROOM);
             message.setMessage("User " + username + " joined room");
-            messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "users", room.getActiveUsers()));
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of(
+                    "message", message,
+                    "code", room.getCode(),
+                    "language", room.getLanguage().getName(),
+                    "input", room.getInput(),
+                    "output", room.getOutput(),
+                    "users", room.getActiveUsers(),
+                    "chatMessages", room.getChatMessages()
+                    )
+            );
         } catch (Exception ex) {
             log.info("Error joining room: " + ex.getMessage());
             message.setEvent("ERROR");
@@ -80,7 +89,8 @@ public class RoomWebSocketController {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.LANGUAGE_CHANGE).build();
         Room room = roomService.getRoom(roomId) ;
-        room.setLanguage(Languge.valueOf(request.get("language").toUpperCase()));
+        room.setLanguage(language.valueOf(request.get("language").toUpperCase()));
+        roomService.setRoom(room);
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "language", request.get("language")));
     }
 
@@ -90,6 +100,7 @@ public class RoomWebSocketController {
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.INPUT_CHANGE).build();
         Room room = roomService.getRoom(roomId) ;
         room.setInput(request.get("input"));
+        roomService.setRoom(room);
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "input", request.get("input")));
     }
 
@@ -98,6 +109,8 @@ public class RoomWebSocketController {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CHAT_MESSAGE).build();
         Room room = roomService.getRoom(roomId) ;
+        room.addChatMessage((Map<String, String>) request.get("chatMessage"));
+        roomService.setRoom(room);
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "chatMessage", request.get("chatMessage")));
     }
 
@@ -108,6 +121,7 @@ public class RoomWebSocketController {
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CODE_UPDATE).build();
         Room room = roomService.getRoom(roomId);
         room.setCode(request.get("code").toString());
+        roomService.setRoom(room);
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "code", request.get("code")));
     }
 }

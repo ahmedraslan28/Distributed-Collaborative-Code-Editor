@@ -1,13 +1,13 @@
 package com.raslan.room.model;
 
-public enum Languge {
+public enum language {
     PYTHON("python"),
     JAVASCRIPT("javascript"),
     JAVA("java"),
     CPP("cpp");
     private final String name;
 
-    Languge(String name) {
+    language(String name) {
         this.name = name;
     }
 

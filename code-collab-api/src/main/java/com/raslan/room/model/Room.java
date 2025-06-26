@@ -1,11 +1,8 @@
 package com.raslan.room.model;
 
-import com.raslan.room.model.Languge;
 import lombok.Data;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Data
 public class Room {
@@ -14,13 +11,27 @@ public class Room {
     private String code ;
     private String input ;
     private String output ;
-    private Languge language;
-    private String cursorPosition ;
-
+    private com.raslan.room.model.language language;
+    private List<Map<String, String>> chatMessages;
     public Room(){
         this.id = UUID.randomUUID().toString();
         this.activeUsers = new HashSet<>() ;
-        this.language = Languge.JAVASCRIPT ;
+        this.chatMessages = new ArrayList<>() ;
+        this.input = "" ;
+        this.output = "" ;
+        this.language = com.raslan.room.model.language.JAVASCRIPT ;
+        this.code = """
+                // Welcome to the Collaborative Code Editor
+                // Start coding here...
+
+                function helloWorld() {
+                  console.log("Hello, world!");
+                }
+
+                helloWorld();""";
+    }
+    public void addChatMessage(Map<String, String> message) {
+        this.chatMessages.add(message);
     }
     public void addUser(String username) {
         this.activeUsers.add(username);

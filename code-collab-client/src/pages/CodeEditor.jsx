@@ -6,25 +6,24 @@ import { IoSendSharp } from "react-icons/io5";
 import { useAtom } from "jotai";
 import { userAtom } from "../atoms/userAtom";
 import { socketAtom } from "../atoms/socketAtom";
-import { roomAtom } from "../atoms/roomAtom";
 import { connectedUsersAtom } from "../atoms/connectedUsersAtom";
+import { chatMessagesAtom, codeAtom, inputAtom, languageAtom, outputAtom } from "../atoms/shared";
+
 
 export default function CodeEditor() {
-  const [code, setCode] = useState(
-    '// Welcome to the Collaborative Code Editor\n// Start coding here...\n\nfunction helloWorld() {\n  console.log("Hello, world!");\n}\n\nhelloWorld();'
-  );
-  const [language, setLanguage] = useState("javascript");
-  const [output, setOutput] = useState([""]); // Output logs
-  const [input, setInput] = useState(""); // Input for code
+  const [code, setCode] = useAtom(codeAtom);
+  const [language, setLanguage] = useAtom(languageAtom);
+  const [output, setOutput] = useAtom(outputAtom);
+  const [input, setInput] = useAtom(inputAtom);
+  const [chatMessages, setChatMessages] = useAtom(chatMessagesAtom);
+  const [connectedUsers, setConnectedUsers] = useAtom(connectedUsersAtom);
+  
+  const [chatInput, setChatInput] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Loading state
   const [currentButtonState, setCurrentButtonState] = useState("Run Code");
   const [socket, setSocket] = useAtom(socketAtom);
   const [user, setUser] = useAtom(userAtom);
-  const [connectedUsers, setConnectedUsers] = useAtom(connectedUsersAtom);
-  const [room, setRoom] = useAtom(roomAtom);
 
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatInput, setChatInput] = useState("");
   const [isCopied, setIsCopied] = useState(false);
 
   const navigate = useNavigate();

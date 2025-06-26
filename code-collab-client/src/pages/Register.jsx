@@ -4,12 +4,12 @@ import { userAtom } from "../atoms/userAtom";
 import { connectedUsersAtom } from "../atoms/connectedUsersAtom";
 
 import { socketAtom } from "../atoms/socketAtom";
-import { roomAtom } from "../atoms/roomAtom";
 import { useNavigate } from "react-router-dom";
 import { Client } from "@stomp/stompjs";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { chatMessagesAtom, codeAtom, inputAtom, languageAtom, outputAtom } from "../atoms/shared";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -21,8 +21,12 @@ export default function Register() {
   });
   const [user, setUser] = useAtom(userAtom);
   const [socket, setSocket] = useAtom(socketAtom);
-  const [room, setRoom] = useAtom(roomAtom);
   const [connectedUsers, setConnectedUsers] = useAtom(connectedUsersAtom);
+  const [code, setCode] = useAtom(codeAtom);
+  const [input, setInput] = useAtom(inputAtom);
+  const [output, setOutput] = useAtom(outputAtom);
+  const [language, setLanguage] = useAtom(languageAtom);
+  const [chatMessages, setChatMessages] = useAtom(chatMessagesAtom)
 
   const [searchParams] = useSearchParams();
 
@@ -32,7 +36,6 @@ export default function Register() {
       setRoomId(roomIdFromUrl);
     }
   }, [searchParams]);
-
 
   const navigate = useNavigate();
 
@@ -97,23 +100,28 @@ export default function Register() {
             const message = response.message;
             const messageUsername = message.username;
             const event = message.event;
-            
+
             if (event === "JOIN_ROOM") {
-              setConnectedUsers(response.users);
               if (messageUsername === name) {
+                console.log("language:", response.language);
                 setUser({
                   id: userId,
                   name: name,
                   roomId: roomId,
                 });
                 setSocket(client);
+                setConnectedUsers(response.users);
+                setChatMessages(response.chatMessages);
+                setCode(response.code);
+                setInput(response.input);
+                setOutput(response.output);
+                setLanguage(response.language);
                 navigate(`/code/${roomId}`);
                 setLoading(false);
               } else {
                 toast.info(`${messageUsername} joined the room.`);
               }
-            } 
-            else if (event === "LEAVE_ROOM") {
+            } else if (event === "LEAVE_ROOM") {
               setConnectedUsers(response.users);
               toast.info(`${messageUsername} left the room.`);
             }
@@ -179,7 +187,9 @@ export default function Register() {
         })
         .then(() => initializeSocket())
         .catch((error) => {
-          toast.error(error.response.data.message || "Username is already taken.");
+          toast.error(
+            error.response.data.message || "Username is already taken."
+          );
         });
     }
   };

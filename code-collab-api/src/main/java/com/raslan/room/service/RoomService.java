@@ -66,6 +66,10 @@ public class RoomService {
         return room;
     }
 
+    public void setRoom(Room room){
+        redisTemplate.opsForValue().set(ROOM_PREFIX + room.getId(), room);
+    }
+
     public boolean isRoomExists(String roomId) {
         return redisTemplate.hasKey(ROOM_PREFIX + roomId);
     }
