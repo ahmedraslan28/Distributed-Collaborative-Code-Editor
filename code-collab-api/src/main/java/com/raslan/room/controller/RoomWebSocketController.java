@@ -1,9 +1,10 @@
 package com.raslan.room.controller;
 
-import com.raslan.room.Room;
-import com.raslan.room.RoomService;
-import com.raslan.shared.WebSocketMessage;
-import com.raslan.shared.WebsocketEvents;
+import com.raslan.room.model.Languge;
+import com.raslan.room.model.Room;
+import com.raslan.room.service.RoomService;
+import com.raslan.room.dto.WebSocketMessage;
+import com.raslan.room.enums.WebsocketEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -78,6 +79,8 @@ public class RoomWebSocketController {
     public void handleLanguageChange(@Payload Map<String, String> request,SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.LANGUAGE_CHANGE).build();
+        Room room = roomService.getRoom(roomId) ;
+        room.setLanguage(Languge.valueOf(request.get("language").toUpperCase()));
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "language", request.get("language")));
     }
 
@@ -85,6 +88,8 @@ public class RoomWebSocketController {
     public void handleInputChange(@Payload Map<String, String> request,SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.INPUT_CHANGE).build();
+        Room room = roomService.getRoom(roomId) ;
+        room.setInput(request.get("input"));
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "input", request.get("input")));
     }
 
@@ -92,6 +97,7 @@ public class RoomWebSocketController {
     public void handleMessage(@Payload Map<String, Object> request,SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CHAT_MESSAGE).build();
+        Room room = roomService.getRoom(roomId) ;
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "chatMessage", request.get("chatMessage")));
     }
 
@@ -100,6 +106,8 @@ public class RoomWebSocketController {
     public void handleCodeUpdate(@Payload Map<String, Object> request,SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
         WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CODE_UPDATE).build();
+        Room room = roomService.getRoom(roomId);
+        room.setCode(request.get("code").toString());
         messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "code", request.get("code")));
     }
 }

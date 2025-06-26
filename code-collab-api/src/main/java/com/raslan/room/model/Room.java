@@ -1,9 +1,8 @@
-package com.raslan.room;
+package com.raslan.room.model;
 
-import com.raslan.models.Languge;
+import com.raslan.room.model.Languge;
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;

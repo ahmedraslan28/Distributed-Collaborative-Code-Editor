@@ -1,4 +1,4 @@
-package com.raslan.shared;
+package com.raslan.room.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,9 +1,9 @@
-package com.raslan.config;
+package com.raslan.shared.config;
 
 import com.raslan.room.model.Room;
 import com.raslan.room.service.RoomService;
-import com.raslan.shared.WebSocketMessage;
-import com.raslan.shared.WebsocketEvents;
+import com.raslan.room.dto.WebSocketMessage;
+import com.raslan.room.enums.WebsocketEvents;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

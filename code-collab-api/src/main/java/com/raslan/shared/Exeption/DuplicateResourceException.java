@@ -1,4 +1,4 @@
-package com.raslan.room.Exeption;
+package com.raslan.shared.Exeption;
 
 public class DuplicateResourceException extends RuntimeException{
     public DuplicateResourceException(String message) {

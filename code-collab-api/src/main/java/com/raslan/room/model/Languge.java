@@ -1,4 +1,4 @@
-package com.raslan.models;
+package com.raslan.room.model;
 
 public enum Languge {
     PYTHON("python"),

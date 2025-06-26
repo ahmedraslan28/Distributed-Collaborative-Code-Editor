@@ -1,4 +1,4 @@
-package com.raslan.config;
+package com.raslan.shared.config;
 
 import com.raslan.room.model.Room;
 import org.springframework.context.annotation.Bean;

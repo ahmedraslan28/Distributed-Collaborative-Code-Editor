@@ -58,9 +58,7 @@ export default function CodeEditor() {
       return;
     }
 
-    const subscription = socket.subscribe(
-      `/topic/room/${user.roomId}`,
-      (res) => {
+    const subscription = socket.subscribe(`/topic/room/${user.roomId}`,(res) => {
         const response = JSON.parse(res.body);
         const event = response.message.event;
         if (event === "JOIN_ROOM" || event === "LEAVE_ROOM") {
@@ -174,7 +172,6 @@ export default function CodeEditor() {
     });
   };
 
-  // handle submit button status multiple user
   const handleButtonStatus = (value, isLoading) => {
     setCurrentButtonState(value);
     setIsLoading(isLoading);

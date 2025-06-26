@@ -1,4 +1,4 @@
-package com.raslan.shared;
+package com.raslan.room.enums;
 
 public class WebsocketEvents {
     public static final String JOIN_ROOM = "JOIN_ROOM";

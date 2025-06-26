@@ -1,8 +1,8 @@
 package com.raslan.room.controller;
 
 
-import com.raslan.room.Room;
-import com.raslan.room.RoomService;
+import com.raslan.room.model.Room;
+import com.raslan.room.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

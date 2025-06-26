@@ -1,4 +1,4 @@
-package com.raslan.config;
+package com.raslan.shared.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;

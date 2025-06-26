@@ -1,6 +1,6 @@
-package com.raslan.room;
+package com.raslan.room.service;
 
-import com.raslan.room.Exeption.DuplicateResourceException;
+import com.raslan.shared.Exeption.DuplicateResourceException;
 import com.raslan.room.model.Room;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
