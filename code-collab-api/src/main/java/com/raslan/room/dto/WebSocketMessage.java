@@ -1,6 +1,5 @@
 package com.raslan.shared;
 
-import com.raslan.room.Room;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

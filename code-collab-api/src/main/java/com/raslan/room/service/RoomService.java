@@ -1,6 +1,7 @@
 package com.raslan.room;
 
 import com.raslan.room.Exeption.DuplicateResourceException;
+import com.raslan.room.model.Room;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

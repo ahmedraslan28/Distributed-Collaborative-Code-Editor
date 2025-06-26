@@ -1,6 +1,6 @@
 package com.raslan.config;
 
-import com.raslan.room.Room;
+import com.raslan.room.model.Room;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;

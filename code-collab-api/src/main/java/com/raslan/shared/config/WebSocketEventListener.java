@@ -1,7 +1,7 @@
 package com.raslan.config;
 
-import com.raslan.room.Room;
-import com.raslan.room.RoomService;
+import com.raslan.room.model.Room;
+import com.raslan.room.service.RoomService;
 import com.raslan.shared.WebSocketMessage;
 import com.raslan.shared.WebsocketEvents;
 import lombok.Data;
@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.util.List;
 import java.util.Map;
 
 @Component
