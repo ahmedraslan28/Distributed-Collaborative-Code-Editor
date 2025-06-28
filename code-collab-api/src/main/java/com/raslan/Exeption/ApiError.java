@@ -1,4 +1,4 @@
-package com.raslan.shared.Exeption;
+package com.raslan.Exeption;
 
 import java.time.LocalDateTime;
 

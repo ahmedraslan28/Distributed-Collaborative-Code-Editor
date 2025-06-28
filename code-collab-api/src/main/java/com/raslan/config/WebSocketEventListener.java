@@ -1,4 +1,4 @@
-package com.raslan.shared.config;
+package com.raslan.config;
 
 import com.raslan.room.model.Room;
 import com.raslan.room.service.RoomService;

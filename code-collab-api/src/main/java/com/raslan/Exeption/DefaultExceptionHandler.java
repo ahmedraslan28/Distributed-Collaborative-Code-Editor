@@ -1,4 +1,4 @@
-package com.raslan.shared.Exeption;
+package com.raslan.Exeption;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
