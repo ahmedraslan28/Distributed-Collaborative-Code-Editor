@@ -4,10 +4,21 @@ services:
     container_name: redis-stack
     ports:
       - "6379:6379"
-      - "8001:8001"
+      - "8001:8001" # Redis Stack UI
     volumes:
       - redis_data:/data
     restart: unless-stopped
+
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # RabbitMQ management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: raslan
+      RABBITMQ_DEFAULT_PASS: raslan
 
 volumes:
   redis_data:
