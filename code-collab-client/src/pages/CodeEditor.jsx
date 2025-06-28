@@ -179,12 +179,6 @@ export default function CodeEditor() {
           language: value,
         }),
       });
-      socket.publish({
-        destination: "/app/room/codeUpdate",
-        body: JSON.stringify({
-          code: languageInitCode[value],
-        }),
-      });
     }
   };
 
