@@ -161,14 +161,31 @@ export default function CodeEditor() {
     });
   };
 
+  const languageInitCode = {
+    javascript: `// Welcome to the Collaborative Code Editor\n// Start coding here...\n\nfunction helloWorld() {\n  console.log("Hello, world!");\n}\n\nhelloWorld();`,
+    python: `# Welcome to the Collaborative Code Editor\n# Start coding here...\n\ndef helloWorld():\n    print("Hello, world!")\n\nhelloWorld()`,
+    cpp: `// Welcome to the Collaborative Code Editor\n// Start coding here...\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, world!" << endl;\n    return 0;\n}`,
+    java: `// Welcome to the Collaborative Code Editor\n// Start coding here...\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, world!");\n    }\n}`
+  };
+
   const handleLanguageChange = (value) => {
-    setLanguage(value);
-    socket.publish({
-      destination: "/app/room/languageChange",
-      body: JSON.stringify({
-        language: value,
-      }),
-    });
+    if (value === language) return;
+    if (window.confirm("Changing the language will erase your current code. Are you sure you want to continue?")) {
+      setLanguage(value);
+      setCode(languageInitCode[value]);
+      socket.publish({
+        destination: "/app/room/languageChange",
+        body: JSON.stringify({
+          language: value,
+        }),
+      });
+      socket.publish({
+        destination: "/app/room/codeUpdate",
+        body: JSON.stringify({
+          code: languageInitCode[value],
+        }),
+      });
+    }
   };
 
   const handleButtonStatus = (value, isLoading) => {
