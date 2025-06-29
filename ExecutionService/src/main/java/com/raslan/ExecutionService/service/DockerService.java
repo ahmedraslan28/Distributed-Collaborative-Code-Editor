@@ -38,7 +38,7 @@ public class DockerService {
             String output = new String(process.getInputStream().readAllBytes());
             process.waitFor();
 
-            Files.list(Path.of(HOST_CODE_DIR)).filter(Files::isRegularFile).forEach(path -> {
+            Files.list(Path.of(HOST_CODE_DIR)).forEach(path -> {
                 try {
                     Files.deleteIfExists(path);
                 } catch (IOException e) {
