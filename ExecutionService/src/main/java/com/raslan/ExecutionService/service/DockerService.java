@@ -40,22 +40,27 @@ public class DockerService {
 
             if (!finished) {
                 process.destroyForcibly();
+                deleteDirectoryFiles();
                 return "Error: Time limit exceeded (5 seconds)";
             }
-
             String output = new String(process.getInputStream().readAllBytes());
-            Files.list(Path.of(HOST_CODE_DIR)).forEach(path -> {
-                try {
-                    Files.deleteIfExists(path);
-                } catch (IOException e) {
-                    log.warn("Failed to delete file: {}", path);
-                }
-            });
+            deleteDirectoryFiles();
+
             return output;
 
         } catch (IOException | InterruptedException e) {
             return "Execution failed: " + e.getMessage();
         }
+    }
+
+    private void deleteDirectoryFiles() throws IOException {
+        Files.list(Path.of(HOST_CODE_DIR)).filter(Files::isRegularFile).forEach(path -> {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                log.warn("Failed to delete file: {}", path);
+            }
+        });
     }
 
     private String chooseContainerName(String language) {
