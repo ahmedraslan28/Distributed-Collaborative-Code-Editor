@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -35,9 +36,14 @@ public class DockerService {
 
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
-            String output = new String(process.getInputStream().readAllBytes());
-            process.waitFor();
+            boolean finished = process.waitFor(5, TimeUnit.SECONDS);
 
+            if (!finished) {
+                process.destroyForcibly();
+                return "Error: Time limit exceeded (5 seconds)";
+            }
+
+            String output = new String(process.getInputStream().readAllBytes());
             Files.list(Path.of(HOST_CODE_DIR)).forEach(path -> {
                 try {
                     Files.deleteIfExists(path);
