@@ -9,12 +9,11 @@ import { Client } from "@stomp/stompjs";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { chatMessagesAtom, codeAtom, inputAtom, languageAtom, outputAtom } from "../atoms/shared";
+import { buttonStatusAtom, chatMessagesAtom, codeAtom, inputAtom, isLoadingAtom, languageAtom, outputAtom } from "../atoms/shared";
 
 export default function Register() {
   const [name, setName] = useState("");
   const [roomId, setRoomId] = useState("");
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({
     name: "",
     roomId: "",
@@ -26,7 +25,9 @@ export default function Register() {
   const [input, setInput] = useAtom(inputAtom);
   const [output, setOutput] = useAtom(outputAtom);
   const [language, setLanguage] = useAtom(languageAtom);
-  const [chatMessages, setChatMessages] = useAtom(chatMessagesAtom)
+  const [chatMessages, setChatMessages] = useAtom(chatMessagesAtom);
+  const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
+    const [currentButtonState, setCurrentButtonState] = useAtom(buttonStatusAtom);
 
   const [searchParams] = useSearchParams();
 
@@ -67,7 +68,7 @@ export default function Register() {
 
     const userId = user.id || crypto.randomUUID();
 
-    setLoading(true);
+    setIsLoading(true);
 
     const client = new Client({
       brokerURL: `ws://localhost:8080/ws`,
@@ -85,11 +86,11 @@ export default function Register() {
             errorMessage.message
               ? toast.error(errorMessage.message)
               : toast.error("Something went wrong.");
-            setLoading(false);
+            setIsLoading(false);
           } catch (e) {
             console.error("Error parsing error message:", e);
             toast.error("An unexpected error occurred.");
-            setLoading(false);
+            setIsLoading(false);
           }
         });
 
@@ -117,7 +118,8 @@ export default function Register() {
                 setOutput(response.output);
                 setLanguage(response.language);
                 navigate(`/code/${roomId}`);
-                setLoading(false);
+                setIsLoading(false);
+                setCurrentButtonState("Run Code");
               } else {
                 toast.info(`${messageUsername} joined the room.`);
               }
@@ -144,29 +146,29 @@ export default function Register() {
         console.error("STOMP error: " + frame.headers["message"]);
         console.error("Details: " + frame.body);
         alert("WebSocket error: " + frame.body);
-        setLoading(false);
+        setIsLoading(false);
       },
       onWebSocketError: (error) => {
         console.error("WebSocket connection error:", error);
         alert("Network error. Please try again.");
-        setLoading(false);
+        setIsLoading(false);
       },
       onWebSocketClose: (event) => {
         console.log("WebSocket connection closed:", event);
-        setLoading(false);
+        setIsLoading(false);
       },
       onDisconnect: () => {
         console.log("WebSocket connection closed.");
         setSocket(null);
         setUser({ id: "", name: "", roomId: "" });
-        setLoading(false);
+        setIsLoading(false);
       },
     });
 
     client.onDisconnect = () => {
       setSocket(null);
       setUser({ id: "", name: "", roomId: "" });
-      setLoading(false);
+      setIsLoading(false);
     };
 
     client.activate();
@@ -261,15 +263,15 @@ export default function Register() {
         </div>
 
         <button
-          disabled={loading}
+          disabled={isLoading}
           onClick={handleJoinRoom}
           className={`w-full py-3 text-white rounded-lg font-medium transition-colors duration-200 ${
-            loading
+            isLoading
               ? "bg-gray-600 cursor-not-allowed"
               : "bg-pink-500 hover:bg-pink-600"
           }`}
         >
-          {loading ? "Joining..." : "Join Room"}
+          {isLoading ? "Joining..." : "Join Room"}
         </button>
       </div>
     </div>

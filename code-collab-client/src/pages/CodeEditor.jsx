@@ -7,8 +7,17 @@ import { useAtom } from "jotai";
 import { userAtom } from "../atoms/userAtom";
 import { socketAtom } from "../atoms/socketAtom";
 import { connectedUsersAtom } from "../atoms/connectedUsersAtom";
-import { chatMessagesAtom, codeAtom, inputAtom, languageAtom, outputAtom } from "../atoms/shared";
+import {
+  buttonStatusAtom,
+  chatMessagesAtom,
+  codeAtom,
+  inputAtom,
+  isLoadingAtom,
+  languageAtom,
+  outputAtom,
+} from "../atoms/shared";
 
+import axios from "axios";
 
 export default function CodeEditor() {
   const [code, setCode] = useAtom(codeAtom);
@@ -17,10 +26,10 @@ export default function CodeEditor() {
   const [input, setInput] = useAtom(inputAtom);
   const [chatMessages, setChatMessages] = useAtom(chatMessagesAtom);
   const [connectedUsers, setConnectedUsers] = useAtom(connectedUsersAtom);
-  
+  const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
+  const [currentButtonState, setCurrentButtonState] = useAtom(buttonStatusAtom);
+
   const [chatInput, setChatInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Loading state
-  const [currentButtonState, setCurrentButtonState] = useState("Run Code");
   const [socket, setSocket] = useAtom(socketAtom);
   const [user, setUser] = useAtom(userAtom);
 
@@ -57,7 +66,9 @@ export default function CodeEditor() {
       return;
     }
 
-    const subscription = socket.subscribe(`/topic/room/${user.roomId}`,(res) => {
+    const subscription = socket.subscribe(
+      `/topic/room/${user.roomId}`,
+      (res) => {
         const response = JSON.parse(res.body);
         const event = response.message.event;
         if (event === "JOIN_ROOM" || event === "LEAVE_ROOM") {
@@ -70,6 +81,10 @@ export default function CodeEditor() {
           setChatMessages((prev) => [...prev, response.chatMessage]);
         } else if (event === "CODE_UPDATE") {
           setCode(response.code);
+        } else if (event === "BUTTON_STATUS") {
+          console.log("Button Status Update:", response);
+          setCurrentButtonState(response.value);
+          setIsLoading(response.isLoading);
         }
       }
     );
@@ -119,36 +134,25 @@ export default function CodeEditor() {
   }, [socket, user.roomId]);
 
   const handleSubmit = async () => {
-    // Display a simple output for demo purposes
-    setOutput((prev) => [...prev, "Hello, world!"]);
-
-    // handleButtonStatus("Submitting...", true);
-    // const submission = {
-    //   code,
-    //   language,
-    //   roomId: user.roomId,
-    //   input
-    // };
+    handleButtonStatus("Submitting...", true);
 
     // socket?.send(user?.id ? user.id : "");
 
-    // const res = await fetch(`http://${IP_ADDRESS}:3000/submit`, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(submission),
-    // });
-
-    // handleButtonStatus("Compiling...", true);
-
-    // if (!res.ok) {
-    //   setOutput((prevOutput) => [
-    //     ...prevOutput,
-    //     "Error submitting code. Please try again.",
-    //   ]);
-    //   handleButtonStatus("Submit Code", false);
-    // }
+    axios
+      .post("http://localhost:8080/api/submit", {
+        code: code,
+        language: language,
+        roomId: user.roomId,
+        input: input,
+      })
+      .then(handleButtonStatus("Compiling...", true))
+      .catch((error) => {
+        setOutput((prevOutput) => [
+          ...prevOutput,
+          "Error submitting code. Please try again.",
+        ]);
+        handleButtonStatus("Submit Code", false);
+      });
   };
 
   const handleInputChange = (e) => {
@@ -165,12 +169,16 @@ export default function CodeEditor() {
     javascript: `// Welcome to the Collaborative Code Editor\n// Start coding here...\n\nfunction helloWorld() {\n  console.log("Hello, world!");\n}\n\nhelloWorld();`,
     python: `# Welcome to the Collaborative Code Editor\n# Start coding here...\n\ndef helloWorld():\n    print("Hello, world!")\n\nhelloWorld()`,
     cpp: `// Welcome to the Collaborative Code Editor\n// Start coding here...\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, world!" << endl;\n    return 0;\n}`,
-    java: `// Welcome to the Collaborative Code Editor\n// Start coding here...\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, world!");\n    }\n}`
+    java: `// Welcome to the Collaborative Code Editor\n// Start coding here...\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, world!");\n    }\n}`,
   };
 
   const handleLanguageChange = (value) => {
     if (value === language) return;
-    if (window.confirm("Changing the language will erase your current code. Are you sure you want to continue?")) {
+    if (
+      window.confirm(
+        "Changing the language will erase your current code. Are you sure you want to continue?"
+      )
+    ) {
       setLanguage(value);
       setCode(languageInitCode[value]);
       socket.publish({
@@ -185,14 +193,13 @@ export default function CodeEditor() {
   const handleButtonStatus = (value, isLoading) => {
     setCurrentButtonState(value);
     setIsLoading(isLoading);
-    socket?.send(
-      JSON.stringify({
-        type: "submitBtnStatus",
+    socket.publish({
+      destination: "/app/room/buttonStatus",
+      body: JSON.stringify({
         value: value,
         isLoading: isLoading,
-        roomId: user.roomId,
-      })
-    );
+      }),
+    });
   };
 
   const handleEditorDidMount = (editor, monaco) => {

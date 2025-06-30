@@ -10,4 +10,5 @@ public class WebsocketEvents {
     public static final String INPUT_CHANGE = "INPUT_CHANGE";
     public static final String CHAT_MESSAGE = "CHAT_MESSAGE";
     public static final String CODE_UPDATE = "CODE_UPDATE";
+    public static final String BUTTON_STATUS= "BUTTON_STATUS";
 }
