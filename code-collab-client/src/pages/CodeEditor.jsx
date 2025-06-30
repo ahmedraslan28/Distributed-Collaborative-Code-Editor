@@ -72,13 +72,13 @@ export default function CodeEditor() {
         const response = JSON.parse(res.body);
         const event = response.message.event;
         if (event === "JOIN_ROOM" || event === "LEAVE_ROOM") {
-          setConnectedUsers(response.users);
+          setConnectedUsers(response.users[1]);
         } else if (event === "LANGUAGE_CHANGE") {
           setLanguage(response.language);
         } else if (event === "INPUT_CHANGE") {
           setInput(response.input);
         } else if (event === "CHAT_MESSAGE") {
-          setChatMessages((prev) => [...prev, response.chatMessage]);
+          setChatMessages((prev) => [...prev, response.chatMessage[1]]);
         } else if (event === "CODE_UPDATE") {
           setCode(response.code);
         } else if (event === "BUTTON_STATUS") {
@@ -342,6 +342,8 @@ export default function CodeEditor() {
             {chatMessages.map((msg, index) => {
               const isCurrentUser = msg.user === (user.name || "You");
               const userIndex = connectedUsers.findIndex((u) => u === msg.user);
+              // console.log(msg.user);
+              // console.log("connectedUsers", connectedUsers);
               const userColor = userColors[userIndex % userColors.length];
               const bgColor = userColor.replace("bg-", "bg-opacity-20 bg-");
 

@@ -1,5 +1,6 @@
 package com.raslan.room.controller;
 
+import com.raslan.messaging.RedisPublisher;
 import com.raslan.room.dto.WebSocketMessage;
 import com.raslan.room.enums.WebsocketEvents;
 import com.raslan.room.model.Room;
@@ -13,7 +14,10 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,6 +25,7 @@ import java.util.Map;
 public class RoomWebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
     private final RoomService roomService;
+    private final RedisPublisher redisPublisher;
 
     @MessageMapping("/room/join")
     public void handleJoinRoom(@Payload Map<String, String> request, SimpMessageHeaderAccessor headerAccessor) {
@@ -43,16 +48,15 @@ public class RoomWebSocketController {
             room = roomService.joinRoom(username, roomId);
             message.setEvent(WebsocketEvents.JOIN_ROOM);
             message.setMessage("User " + username + " joined room");
-            messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of(
-                            "message", message,
-                            "code", room.getCode(),
-                            "language", room.getLanguage().getName(),
-                            "input", room.getInput(),
-                            "output", room.getOutput(),
-                            "users", room.getActiveUsers(),
-                            "chatMessages", room.getChatMessages()
-                    )
-            );
+            redisPublisher.publish("room:" + roomId, Map.of(
+                    "message", message,
+                    "code", room.getCode(),
+                    "language", room.getLanguage().getName(),
+                    "input", room.getInput(),
+                    "output", room.getOutput(),
+                    "users", room.getActiveUsers(),
+                    "chatMessages", room.getChatMessages()
+            ));
         } catch (Exception ex) {
             log.info("Error joining room: " + ex.getMessage());
             message.setEvent("ERROR");
@@ -61,7 +65,6 @@ public class RoomWebSocketController {
         }
 
     }
-
 
     @MessageMapping("/room/leave")
     public void handleLeaveRoom(SimpMessageHeaderAccessor headerAccessor) {
@@ -80,57 +83,55 @@ public class RoomWebSocketController {
                 .message(username + " has left the room.")
                 .build();
         Room room = roomService.leaveRoom(roomId, username);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "users", room.getActiveUsers()));
+        redisPublisher.publish("room:" + roomId, Map.of("message", message, "users", room.getActiveUsers()));
     }
-
 
     @MessageMapping("/room/languageChange")
     public void handleLanguageChange(@Payload Map<String, String> request, SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
-        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.LANGUAGE_CHANGE).build();
+        WebSocketMessage message = WebSocketMessage.builder().roomId(roomId).event(WebsocketEvents.LANGUAGE_CHANGE).build();
         Room room = roomService.getRoom(roomId);
         room.setLanguage(language.valueOf(request.get("language").toUpperCase()));
         roomService.setRoom(room);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "language", request.get("language")));
+        redisPublisher.publish("room:" + roomId, Map.of("message", message, "language", request.get("language")));
     }
 
     @MessageMapping("/room/inputChange")
     public void handleInputChange(@Payload Map<String, String> request, SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
-        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.INPUT_CHANGE).build();
+        WebSocketMessage message = WebSocketMessage.builder().roomId(roomId).event(WebsocketEvents.INPUT_CHANGE).build();
         Room room = roomService.getRoom(roomId);
         room.setInput(request.get("input"));
         roomService.setRoom(room);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "input", request.get("input")));
+        redisPublisher.publish("room:" + roomId, Map.of("message", message, "input", request.get("input")));
     }
 
     @MessageMapping("/room/chatMessage")
     public void handleMessage(@Payload Map<String, Object> request, SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
-        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CHAT_MESSAGE).build();
+        WebSocketMessage message = WebSocketMessage.builder().roomId(roomId).event(WebsocketEvents.CHAT_MESSAGE).build();
         Room room = roomService.getRoom(roomId);
         room.addChatMessage((Map<String, String>) request.get("chatMessage"));
         roomService.setRoom(room);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "chatMessage", request.get("chatMessage")));
+        redisPublisher.publish("room:" + roomId, Map.of("message", message, "chatMessage", request.get("chatMessage")));
     }
-
 
     @MessageMapping("/room/codeUpdate")
     public void handleCodeUpdate(@Payload Map<String, Object> request, SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
-        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.CODE_UPDATE).build();
+        WebSocketMessage message = WebSocketMessage.builder().roomId(roomId).event(WebsocketEvents.CODE_UPDATE).build();
         Room room = roomService.getRoom(roomId);
         room.setCode(request.get("code").toString());
         roomService.setRoom(room);
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of("message", message, "code", request.get("code")));
+        redisPublisher.publish("room:" + roomId, Map.of("message", message, "code", request.get("code")));
     }
 
     @MessageMapping("/room/buttonStatus")
     public void handleButtonStatus(@Payload Map<String, Object> request, SimpMessageHeaderAccessor headerAccessor) {
         String roomId = (String) headerAccessor.getSessionAttributes().get("roomId");
-        WebSocketMessage message = WebSocketMessage.builder().event(WebsocketEvents.BUTTON_STATUS).build();
+        WebSocketMessage message = WebSocketMessage.builder().roomId(roomId).event(WebsocketEvents.BUTTON_STATUS).build();
         log.info("button status changed to : " + request.get("value"));
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, Map.of(
+        redisPublisher.publish("room:" + roomId, Map.of(
                 "message", message,
                 "value", request.get("value"),
                 "isLoading", request.get("isLoading"))

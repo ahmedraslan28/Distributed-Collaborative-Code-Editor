@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class RoomService {
 
-    private final RedisTemplate<String, Room> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final String ROOM_PREFIX = "room:";
 
     public Room createRoom(String username, String roomId) {
@@ -35,7 +35,7 @@ public class RoomService {
             throw new RuntimeException("Room not found");
         }
 
-        return redisTemplate.opsForValue().get(ROOM_PREFIX + roomId);
+        return (Room) redisTemplate.opsForValue().get(ROOM_PREFIX + roomId);
     }
 
     public Room joinOrCreate(String username, String roomId){

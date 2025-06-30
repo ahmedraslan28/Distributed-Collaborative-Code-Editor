@@ -105,14 +105,16 @@ export default function Register() {
             if (event === "JOIN_ROOM") {
               if (messageUsername === name) {
                 console.log("language:", response.language);
+                console.log("chat messages:", response.chatMessages);
+                console.log("connected users:", response.users);
                 setUser({
                   id: userId,
                   name: name,
                   roomId: roomId,
                 });
                 setSocket(client);
-                setConnectedUsers(response.users);
-                setChatMessages(response.chatMessages);
+                setConnectedUsers(response.users[1]);
+                setChatMessages(response.chatMessages[1]);
                 setCode(response.code);
                 setInput(response.input);
                 setOutput(response.output);
@@ -124,7 +126,7 @@ export default function Register() {
                 toast.info(`${messageUsername} joined the room.`);
               }
             } else if (event === "LEAVE_ROOM") {
-              setConnectedUsers(response.users);
+              setConnectedUsers(response.users[1]);
               toast.info(`${messageUsername} left the room.`);
             }
           } catch (e) {
