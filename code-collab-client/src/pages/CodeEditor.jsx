@@ -85,6 +85,9 @@ export default function CodeEditor() {
           console.log("Button Status Update:", response);
           setCurrentButtonState(response.value);
           setIsLoading(response.isLoading);
+        }else if (event==="EXECUTION_RESULT"){
+          setOutput([response.output]);
+          handleButtonStatus("Submit Code", false);
         }
       }
     );
@@ -95,11 +98,6 @@ export default function CodeEditor() {
 
     // socket.onmessage = (event) => {
     //   const data = JSON.parse(event.data);
-    //   // // on change of Submit Button Status
-    //   // if (data.type === "submitBtnStatus") {
-    //   //   setCurrentButtonState(data.value);
-    //   //   setIsLoading(data.isLoading);
-    //   // }
     //   // // on change of output
     //   // if (data.type === "output") {
     //   //   setOutput((prevOutput) => [...prevOutput, data.message]);
@@ -145,7 +143,7 @@ export default function CodeEditor() {
         roomId: user.roomId,
         input: input,
       })
-      .then(handleButtonStatus("Compiling...", true))
+      .then(() => handleButtonStatus("Compiling...", true)) 
       .catch((error) => {
         setOutput((prevOutput) => [
           ...prevOutput,

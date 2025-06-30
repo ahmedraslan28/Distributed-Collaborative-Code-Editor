@@ -12,6 +12,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ExecutionService {
     private final DockerService dockerService;
+    private final RedisPublisher redisPublisher;
     @RabbitListener(queues = "${rabbitmq.queue.name}")
     public void handleExecution(Map<String, String> submission) {
         log.info("Received submission Request : {}",submission);
@@ -21,5 +22,13 @@ public class ExecutionService {
                 submission.get("input")
         );
         log.info("Execution completed, output: {}", output);
+        Map<String, Object> message = Map.of(
+                "roomId", submission.get("roomId"),
+                "event", "EXECUTION_RESULT"
+        );
+        redisPublisher.publish(
+                "execution:result:"+submission.get("roomId"),
+                Map.of("message", message, "output", output)
+        );
     }
 }

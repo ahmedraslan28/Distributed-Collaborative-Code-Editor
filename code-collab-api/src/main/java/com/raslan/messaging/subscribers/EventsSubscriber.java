@@ -1,4 +1,4 @@
-package com.raslan.messaging;
+package com.raslan.messaging.subscribers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -17,7 +17,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RedisSubscriber implements MessageListener {
+public class EventsSubscriber implements MessageListener {
     private final SimpMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
 

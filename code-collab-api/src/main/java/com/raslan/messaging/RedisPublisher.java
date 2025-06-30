@@ -1,6 +1,5 @@
 package com.raslan.messaging;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raslan.room.dto.WebSocketMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,6 @@ import java.util.Map;
 @Slf4j
 public class RedisPublisher {
     private final RedisTemplate<String, Object> redisTemplate ;
-    private final ObjectMapper objectMapper ;
     public void publish(String channel, Object message) {
         redisTemplate.convertAndSend(channel, message) ;
         Map<String, Object> payload = (Map<String, Object>) message;

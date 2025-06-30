@@ -121,7 +121,8 @@ export default function Register() {
                 setLanguage(response.language);
                 navigate(`/code/${roomId}`);
                 setIsLoading(false);
-                setCurrentButtonState("Run Code");
+                setCurrentButtonState("Submit Code");
+                setOutput([]);
               } else {
                 toast.info(`${messageUsername} joined the room.`);
               }

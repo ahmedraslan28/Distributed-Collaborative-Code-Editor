@@ -36,12 +36,12 @@ public class DockerService {
 
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
-            boolean finished = process.waitFor(5, TimeUnit.SECONDS);
+            boolean finished = process.waitFor(10, TimeUnit.SECONDS);
 
             if (!finished) {
                 process.destroyForcibly();
                 deleteDirectoryFiles();
-                return "Error: Time limit exceeded (5 seconds)";
+                return "Error: Time limit exceeded (10 seconds)";
             }
             String output = new String(process.getInputStream().readAllBytes());
             deleteDirectoryFiles();
