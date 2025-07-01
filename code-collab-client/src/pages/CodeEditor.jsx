@@ -87,6 +87,7 @@ export default function CodeEditor() {
           setCurrentButtonState(response.value);
           setIsLoading(response.isLoading);
         }else if (event==="EXECUTION_RESULT"){
+          console.log(response.output);
           setOutput([response.output]);
           handleButtonStatus("Submit Code", false);
         }
@@ -96,47 +97,10 @@ export default function CodeEditor() {
     return () => {
       subscription.unsubscribe();
     };
-
-    // socket.onmessage = (event) => {
-    //   const data = JSON.parse(event.data);
-    //   // // on change of output
-    //   // if (data.type === "output") {
-    //   //   setOutput((prevOutput) => [...prevOutput, data.message]);
-    //   //   handleButtonStatus("Submit Code", false);
-    //   // }
-
-    //   // // on receive cursor position
-    //   // if (data.type === "cursorPosition") {
-    //   //   // Update cursor position for the user
-    //   //   const updatedUsers = connectedUsers.map((user) => {
-    //   //     if (user.id === data.userId) {
-    //   //       return { ...user, cursorPosition: data.cursorPosition };
-    //   //     }
-    //   //     return user;
-    //   //   });
-    //   //   setConnectedUsers(updatedUsers);
-    //   // }
-
-    //   // // on recive cursor poisition
-    //   // if (data.type === "cursorPosition") {
-    //   //   const updatedUsers = connectedUsers.map((user) => {
-    //   //     if (user.id === data.userId) {
-    //   //       return { ...user, cursorPosition: data.cursorPosition };
-    //   //     }
-    //   //     return user;
-    //   //   });
-    //   //   console.log("updatedUsers", updatedUsers);
-
-    //   //   setConnectedUsers(updatedUsers);
-    //   // }
-    // };
   }, [socket, user.roomId]);
 
   const handleSubmit = async () => {
     handleButtonStatus("Submitting...", true);
-
-    // socket?.send(user?.id ? user.id : "");
-
     axios
       .post("http://localhost:8080/api/submit", {
         code: code,
