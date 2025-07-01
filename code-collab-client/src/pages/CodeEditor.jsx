@@ -78,7 +78,8 @@ export default function CodeEditor() {
         } else if (event === "INPUT_CHANGE") {
           setInput(response.input);
         } else if (event === "CHAT_MESSAGE") {
-          setChatMessages((prev) => [...prev, response.chatMessage[1]]);
+          console.log("chat messages :" , response.chatMessage)
+          setChatMessages((prev) => [...prev, response.chatMessage]);
         } else if (event === "CODE_UPDATE") {
           setCode(response.code);
         } else if (event === "BUTTON_STATUS") {
