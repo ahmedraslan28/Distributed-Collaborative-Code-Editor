@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.raslan</groupId>
-	<artifactId>ExecutionService</artifactId>
+	<artifactId>execution-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ExecutionService</name>
 	<description>Demo project for Spring Boot</description>

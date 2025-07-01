@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.raslan</groupId>
-	<artifactId>code-collab-api</artifactId>
+	<artifactId>collboration-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>code collaborative </name>
 	<description>Scalable Collaborative Code Editor </description>
