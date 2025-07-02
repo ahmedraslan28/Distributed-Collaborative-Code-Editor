@@ -1,4 +1,4 @@
-package com.raslan.ExecutionService.config;
+package com.raslan.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfiguration {
+
     @Value("${rabbitmq.queue.name}")
     private String queueName;
 
@@ -23,12 +24,12 @@ public class RabbitMQConfiguration {
 
     @Bean
     public Queue executionQueue() {
-        return new Queue(queueName, true); // must match publisher's config
+        return new Queue(queueName, true); // durable queue
     }
 
     @Bean
     public DirectExchange directExchange() {
-        return new DirectExchange(exchangeName); // must match publisher
+        return new DirectExchange(exchangeName);
     }
 
     @Bean
