@@ -4,21 +4,90 @@ services:
     container_name: redis-stack
     ports:
       - "6379:6379"
-      - "8001:8001" # Redis Stack UI
+      - "8001:8001"
     volumes:
       - redis_data:/data
     restart: unless-stopped
-
 
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
       - "5672:5672"
-      - "15672:15672" # RabbitMQ management UI
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: raslan
       RABBITMQ_DEFAULT_PASS: raslan
+
+  collaboration-service:
+    build:
+      context: ./collaboration-service
+      dockerfile: Dockerfile
+    container_name: collaboration-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis-stack
+      - rabbitmq
+    environment:
+      SPRING_DATA_REDIS_HOST: redis-stack
+      SPRING_RABBITMQ_HOST: rabbitmq
+    restart: unless-stopped
+
+  execution-service:
+    build:
+      context: ./execution-service
+      dockerfile: Dockerfile
+    container_name: execution-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis-stack
+      - rabbitmq
+    environment:
+      SPRING_DATA_REDIS_HOST: redis-stack
+      SPRING_RABBITMQ_HOST: rabbitmq
+      CODE_HOST_DIR: /code-exec
+    volumes:
+      - ./execution-service/code-exec:/code-exec
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+  code-java:
+    image: openjdk:21-slim
+    container_name: code-java
+    volumes:
+      - ./execution-service/code-exec:/app
+    working_dir: /app
+    command: tail -f /dev/null
+    restart: unless-stopped
+
+  code-python:
+    image: python:3.12-slim
+    container_name: code-python
+    volumes:
+      - ./execution-service/code-exec:/app
+    working_dir: /app
+    command: tail -f /dev/null
+    restart: unless-stopped
+
+  code-cpp:
+    image: gcc:13
+    container_name: code-cpp
+    volumes:
+      - ./execution-service/code-exec:/app
+    working_dir: /app
+    command: tail -f /dev/null
+    restart: unless-stopped
+
+  code-node:
+    image: node:20-alpine
+    container_name: code-node
+    volumes:
+      - ./execution-service/code-exec:/app
+    working_dir: /app
+    command: tail -f /dev/null
+    restart: unless-stopped
 
 volumes:
   redis_data:
