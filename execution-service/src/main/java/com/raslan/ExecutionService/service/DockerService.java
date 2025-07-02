@@ -1,6 +1,7 @@
 package com.raslan.ExecutionService.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -12,8 +13,11 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class DockerService {
+    private final Path HOST_CODE_DIR;
 
-    private static final String HOST_CODE_DIR = "C:/tmp/code-exec";
+    public DockerService(@Value("${code.host-dir}") String hostCodeDirPath) {
+        this.HOST_CODE_DIR = Path.of(hostCodeDirPath).toAbsolutePath();
+    }
 
     public String runCode(String language, String code, String input) {
         try {
@@ -22,8 +26,8 @@ public class DockerService {
             String inputFilename = id + "-input.txt";
 
             // Write code and input to shared directory
-            Path codeFile = Path.of(HOST_CODE_DIR, codeFilename);
-            Path inputFile = Path.of(HOST_CODE_DIR, inputFilename);
+            Path codeFile = HOST_CODE_DIR.resolve(codeFilename);
+            Path inputFile = HOST_CODE_DIR.resolve(inputFilename);
             Files.writeString(codeFile, code);
             Files.writeString(inputFile, input);
 
@@ -54,14 +58,17 @@ public class DockerService {
     }
 
     private void deleteDirectoryFiles() throws IOException {
-        Files.list(Path.of(HOST_CODE_DIR)).filter(Files::isRegularFile).forEach(path -> {
-            try {
-                Files.deleteIfExists(path);
-            } catch (IOException e) {
-                log.warn("Failed to delete file: {}", path);
-            }
-        });
+        Files.list(HOST_CODE_DIR)
+                .filter(Files::isRegularFile)
+                .forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException e) {
+                        log.warn("Failed to delete file: {}", path);
+                    }
+                });
     }
+
 
     private String chooseContainerName(String language) {
         return switch (language) {
