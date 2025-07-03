@@ -1,8 +1,9 @@
 # Scalable Collaborative Code Editor
 A collaborative, real-time code editor built with microservices architecture where users can seamlessly code together. It provides a platform for multiple users to enter a room, share a unique room ID, and collaborate on code simultaneously and chat with each other.
+## Targeted Architecture
+![Targeted Architecture](media/arch.png)
 
 ## Features
-
 - Users can create and join rooms using a unique room ID.
 - Code and chat with other users in the room 
 - Used Redis Pub/Sub and RabbitMQ for fast, scalable inter-service communication.
