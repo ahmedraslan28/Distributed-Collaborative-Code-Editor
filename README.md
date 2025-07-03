@@ -18,23 +18,22 @@ A collaborative, real-time code editor built with microservices architecture whe
 - **React**
 
 ## Setup Instructions
-
-### Running Using Docker
 1. Docker should be installed on your machine:
 
 2. Clone the repository:
    ```sh
-   git clone https://github.com/ahmedraslan28/movies-app.git
-   cd movies-app
+   git clone https://github.com/ahmedraslan28/Scalable-Code-Collaborative-Editor.git
+   cd Scalable-Code-Collaborative-Editor
    ```
 3. Run commands:
    ```sh
-   cd movies-app-api
-   mvn clean package 
+   cd collaboration-service
+   mvn clean install -DskipTests 
+   cd ../execution-service
+   mvn clean install -DskipTests
    docker-compose up --build -d 
+   cd ../code-collab-client
+   npm start
    ```
-4. access the app
-* app will be on: http://localhost:4201
-* admin account {email: admin@fawry.com, password: fawry}
-* user account  {email: user@fawry.com, password: fawry}
+4. access the app on http://localhost:3000
 
