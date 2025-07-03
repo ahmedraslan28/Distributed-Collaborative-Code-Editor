@@ -1,6 +1,6 @@
 # Scalable Collaborative Code Editor
 A collaborative, real-time code editor built with microservices architecture where users can seamlessly code together. It provides a platform for multiple users to enter a room, share a unique room ID, and collaborate on code simultaneously and chat with each other.
-## Targeted Architecture
+## Target Architecture
 ![Targeted Architecture](media/arch.png)
 
 ## Features
